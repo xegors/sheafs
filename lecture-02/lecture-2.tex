@@ -1,0 +1,2204 @@
+% !TeX program = xelatex
+% Конспект лекции 2 (19.09, С. М. Львовский) по сканам lecture-02/photo_*.jpg,
+% дополненный материалом из книг: Р. Годеман, Ю. И. Манин.
+% Формат B5, шрифт PT Serif; обозначения: \mathscr{F} — предпучок/пучок,
+% rho — отображения ограничения.
+\documentclass[11pt,b5paper]{article}
+
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setdefaultlanguage{russian}
+\setotherlanguage{english}
+\defaultfontfeatures{Ligatures=TeX}
+\setmainfont{PT Serif}
+
+\usepackage{geometry}
+\geometry{b5paper,inner=1.5cm,outer=1.3cm,top=1.5cm,bottom=1.1cm,
+  headsep=6pt}
+
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{mathrsfs}                 % \mathscr — начертание предпучков
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,decorations.pathreplacing,shapes.geometric,patterns}
+\usepackage{tikz-cd}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{titletoc}
+\usepackage{needspace}
+\usepackage{fancyhdr}
+\usepackage{indentfirst}
+
+% Токены дизайн-системы (навык brutalism: bergside/awesome-design-skills)
+\definecolor{text}{HTML}{111827}
+\definecolor{primary}{HTML}{DD614C}
+\definecolor{secondary}{HTML}{DAA144}
+\definecolor{success}{HTML}{16A34A}
+\definecolor{warning}{HTML}{D97706}
+\definecolor{danger}{HTML}{DC2626}
+% Цвета ссылок — как у Шейкина (тёмно-красные ссылки, зелёные цитаты)
+\definecolor{sheykinlink}{rgb}{0.6,0,0}
+\definecolor{sheykincite}{rgb}{0,0.6,0}
+\definecolor{sheykinurl}{rgb}{0,0,0.9}
+
+\usepackage[unicode,psdextra,linktocpage=true,colorlinks=true,
+  linkcolor=sheykinlink,citecolor=sheykincite,urlcolor=sheykinurl]{hyperref}
+% polyglossia (russian) делает " активным символом, что ломает подписи
+% в tikz-cd (\ar[r,"f"]); нам " не нужен — в тексте используются «».
+\AtBeginDocument{\catcode`\"=12\relax\color{text}}
+
+%------------------------------------------------------------------
+% Обозначения
+%------------------------------------------------------------------
+\newcommand{\et}{\text{ét}}
+\newcommand{\Hom}{\operatorname{Hom}}
+\newcommand{\Sh}{\mathrm{Sh}}
+\newcommand{\PSh}{\mathrm{PSh}}
+\newcommand{\id}{\mathrm{id}}
+\newcommand{\Shv}[1]{\mathscr{#1}}   % предпучок/пучок
+\newcommand{\Top}{\mathrm{Top}}
+\newcommand{\res}{\rho}              % отображение ограничения
+\newcommand{\dirlim}{\varinjlim}
+
+\theoremstyle{plain}
+\newtheorem{thminner}{Утверждение}[section]
+\newtheorem{leminner}[thminner]{Лемма}
+\newtheorem{factinner}[thminner]{Факт}
+\newtheorem{corinner}[thminner]{Следствие}
+\theoremstyle{definition}
+\newtheorem{defninner}[thminner]{Определение}
+\newtheorem{exminner}[thminner]{Пример}
+\newtheorem{assinner}[thminner]{Предположение}
+\theoremstyle{remark}
+\newtheorem{reminner}[thminner]{Замечание}
+
+% Теоремные окружения набираются целиком в коробке: заголовок никогда
+% не оторвётся от текста, блок не рвётся на границе страниц.
+\newsavebox{\thmbox}
+\newcommand{\thmbeg}{%
+  \par\smallskip
+  \begin{lrbox}{\thmbox}%
+  \begin{minipage}{\linewidth}}
+\newcommand{\thmend}{%
+  \end{minipage}%
+  \end{lrbox}%
+  \noindent\usebox{\thmbox}%
+  \par\smallskip}
+\newenvironment{thm}{\thmbeg\begin{thminner}}{\end{thminner}\thmend}
+\newenvironment{lem}{\thmbeg\begin{leminner}}{\end{leminner}\thmend}
+\newenvironment{fact}{\thmbeg\begin{factinner}}{\end{factinner}\thmend}
+\newenvironment{cor}{\thmbeg\begin{corinner}}{\end{corinner}\thmend}
+\newenvironment{defn}{\thmbeg\begin{defninner}}{\end{defninner}\thmend}
+\newenvironment{exm}{\thmbeg\begin{exminner}}{\end{exminner}\thmend}
+\newenvironment{ass}{\thmbeg\begin{assinner}}{\end{assinner}\thmend}
+\newenvironment{rem}{\thmbeg\begin{reminner}}{\end{reminner}\thmend}
+
+% Блоки-дополнения: серый текст без рамок (стиль Шейкина)
+\newenvironment{bookbox}{\par\smallskip\begingroup\color{gray}\noindent
+  \ignorespaces}{\par\endgroup\smallskip}
+\newcommand{\booksrc}[1]{%
+  \noindent{\bfseries\small Дополнение из книги:}\par\smallskip
+  \noindent#1\par\smallskip}
+
+\newcommand{\sectionsrc}[1]{\par\smallskip\noindent
+  {\color{gray}\footnotesize По сканам: #1}\par\medskip}
+
+%------------------------------------------------------------------
+% Нумерация рисунков и диаграмм (не «плавающие»: стоят на своём месте)
+%------------------------------------------------------------------
+\newcounter{ris}[section]
+\renewcommand{\theris}{\thesection.\arabic{ris}}
+\newcounter{dgm}[section]
+\renewcommand{\thedgm}{\thesection.\arabic{dgm}}
+\newcommand{\risCap}{}
+\newcommand{\dgmCap}{}
+
+\newsavebox{\risbox}
+\newsavebox{\dgmbox}
+\newenvironment{risunok}[1]{%
+  \par\medskip\refstepcounter{ris}%
+  \renewcommand{\risCap}{#1}%
+  \par\centering\begingroup
+  \begin{lrbox}{\risbox}%
+  \begin{minipage}{\linewidth}%
+  \centering}
+ {\par\smallskip{\small Рис.~\theris.~\risCap}%
+  \end{minipage}%
+  \end{lrbox}%
+  \usebox{\risbox}%
+  \endgroup\par\medskip}
+
+\newenvironment{diagram}[1]{%
+  \par\medskip\refstepcounter{dgm}%
+  \renewcommand{\dgmCap}{#1}%
+  \par\centering\begingroup
+  \begin{lrbox}{\dgmbox}%
+  \begin{minipage}{\linewidth}%
+  \centering}
+ {\par\smallskip{\small Диаг.~\thedgm.~\dgmCap}%
+  \end{minipage}%
+  \end{lrbox}%
+  \usebox{\dgmbox}%
+  \endgroup\par\medskip}
+
+% стиль для диаграмм tikz-cd
+\tikzset{cd style/.style={column sep=1.7em,row sep=1.6em,
+  every node/.style={font=\small}}}
+
+% единый стиль иллюстраций (рисунков); цвета — токены brutalism
+\tikzset{
+  fig base/.style   = {line width=0.9pt,draw=text},
+  fig open/.style   = {line width=0.7pt,dashed,draw=primary},
+  fig open2/.style  = {line width=0.7pt,dashed,draw=success},
+  fig fiber/.style  = {line width=0.55pt,dotted,draw=gray!75!black},
+  fig sect/.style   = {line width=1.4pt,draw=danger},
+  fig leafA/.style  = {line width=1.4pt,draw=primary},
+  fig leafB/.style  = {line width=1.4pt,draw=success},
+  fig dot/.style    = {circle,fill=text,inner sep=0pt,minimum size=4.6pt},
+  fig note/.style   = {font=\footnotesize,inner sep=1.5pt},
+}
+
+\setlength{\emergencystretch}{3em}
+\tolerance=3000
+\setlength{\hfuzz}{2pt}
+\setlist{nosep,leftmargin=*}
+\setlist[enumerate,1]{label=[\arabic*],leftmargin=*}
+\newlist{conditions}{enumerate}{2}
+\setlist[conditions,1]{
+	label=(\roman{conditionsi}),
+	leftmargin=1cm,
+	rightmargin=.5cm
+}
+\setlist[conditions,2]{
+	label=(\roman{conditionsi}.\alph{conditionsii}),
+	leftmargin=1cm,
+	rightmargin=.5cm
+}
+\newlist{bullets}{itemize}{3}
+\setlist[bullets,1]{label=$\circ$,leftmargin=1cm,rightmargin=.5cm}
+\setlist[bullets,2]{label=--,leftmargin=1cm,rightmargin=.5cm}
+\setlist[bullets,3]{label=$\diamond$,leftmargin=1cm,rightmargin=.5cm}
+
+%--- Заголовки: \section простые (как у Шейкина), подзаголовки ---
+%--- runin (жирный / курсив), как обговорено ------------------------
+\titleformat{\section}[block]
+  {\normalfont\Large\bfseries}
+  {\thesection.}{.5em}{}
+\titleformat{name=\section,numberless}[block]
+  {\normalfont\Large\bfseries}
+  {}{0pt}{}
+\titlespacing*{\section}{0pt}{16pt}{8pt}
+\titleformat{\subsection}[runin]
+  {\normalfont\bfseries}
+  {\thesubsection.}{.5em}{}
+  [.]\titlespacing{\subsection}{0pt}{1.5ex plus .1ex minus .2ex}{1ex}
+\titleformat{name=\subsubsection,numberless}[runin]
+  {\normalfont\itshape}{}{0pt}{}[.]
+\titlespacing{name=\subsubsection,numberless}{0pt}
+  {1.5ex plus .1ex minus .1ex}{1ex}
+% Заголовок не остаётся один внизу страницы: \Needspace до вызова
+% (внутри формата titlesec он не срабатывает).
+\let\brutsection\section
+\renewcommand{\section}{\Needspace{7\baselineskip}\brutsection}
+\let\brutsubsection\subsection
+\renewcommand{\subsection}{\Needspace{5\baselineskip}\brutsubsection}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+\fancyhead[L]{\footnotesize Лекция~2. Прокачивание пучка}
+\fancyhead[R]{\footnotesize\thepage}
+
+\makeatletter
+% Оглавление: единая колонка номеров (2.6em), заголовки с одного края,
+% номера страниц — по правому краю текстовой полосы.
+\titlecontents{section}
+  [0pt]
+  {\addvspace{10pt}\normalfont\bfseries}
+  {\contentslabel[\thecontentslabel]{2.6em}}
+  {}
+  {\hfill\contentspage}
+  [\vspace{3pt}{\color{text}\hrule height0.4pt}]
+\titlecontents{subsection}
+  [0pt]
+  {\addvspace{2pt}\normalfont}
+  {\contentslabel[\thecontentslabel]{2.6em}}
+  {}
+  {\titlerule*[0.45em]{.}\contentspage}
+\makeatother
+%------------------------------------------------------------------
+
+\begin{document}
+
+\thispagestyle{empty}
+\vspace*{1.2cm}
+\begin{center}
+{\large Конспект лекции~2, 19.09\par}
+\vspace{0.9cm}
+{\Large\bfseries Пространство ростков $\et(\Shv{F})$, пучок
+ $\Shv{F}^{\#}$\\[4pt]
+ и изоморфизм
+ $\Hom(\Shv{F},\Shv{G})\simeq\Hom(\Shv{F}^{\#},\Shv{G})$\par}
+\vspace{0.9cm}
+{\large С.~М.~Львовский --- курс теории пучков\par}
+\vspace{2.2cm}
+{\small Конспект по сканам lecture-02/photo\_1\,\ldots\,photo\_7
+ (рукописная фолиация стр.~9---15); текст дополнен материалом из книг
+ Годемана и Манина (отмечено <<Дополнение из книги>>). Формат~B5.\par}
+\end{center}
+\bigskip
+
+\tableofcontents
+
+%==================================================================
+\section{План лекции, обозначения и соответствие сканам}
+%==================================================================
+
+\subsection{О чём эта лекция}
+В лекции~1 предпучки и пучки были определены аксиомами (F1) и (F2),
+построено пространство ростков, эскизно намечен <<прокачивание>>
+(sheafification) предпучка. Во второй лекции эта конструкция доводится
+до конца и получает функторное оправдание. Если коротко, лекция
+отвечает на три вопроса.
+
+\begin{conditions}
+\item \textbf{Откуда берётся пучок из предпучка.} Из предпучка
+ $\Shv{F}$ строится топологическое пространство $\et(\Shv{F})$ с
+ локальным гомеоморфизмом $\pi\colon\et(\Shv{F})\to X$; пучком
+ называется пучок непрерывных сечений $\pi$ --- он обозначается
+ $\Shv{F}^{\#}$.
+\item \textbf{Почему это действительно пучок.} Проверяются аксиомы
+ (F1) и (F2) для $\Shv{F}^{\#}$; разбирается пример постоянного
+ предпучка.
+\item \textbf{Почему «прокачивание» не теряет информации.}
+ Доказывается главное утверждение
+ \[
+   \Hom(\Shv{F},\Shv{G})\simeq\Hom(\Shv{F}^{\#},\Shv{G})
+ \]
+ естественно по $\Shv{F}$ и по $\Shv{G}$ при пучке $\Shv{G}$.
+ Из этого следует, что $\Shv{F}\mapsto\Shv{F}^{\#}$ задано однозначно
+ (с точностью до изоморфизма), и что <<прокачивание>> можно делать
+ внутри готового пучка: секции $\Shv{F}^{+}$ дают тот же результат,
+ $\Shv{F}^{+}\simeq\Shv{F}^{\#}$.
+\end{conditions}
+
+Последняя часть лекции --- переход к абелевой алгебре пучков: ядро,
+образ (образ надо <<прокачивать>>) и точные последовательности.
+
+\subsection{Обозначения}
+В этом конспекте для предпучков и пучков используется начертание
+$\Shv{F},\Shv{G},\Shv{H},\Shv{P}$ (mathscr), а отображения ограничения
+пишутся через $\rho$. Остальные обозначения собраны в таблице.
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{0.30\textwidth}p{0.63\textwidth}@{}}
+\toprule
+Обозначение & Что означает \\
+\midrule
+$X$ & топологическое пространство (база) \\
+$U,V,W,U_i$ & открытые подмножества $X$ \\
+$\Top_X$ & категория открытых множеств $X$: объекты --- открытые,
+ морфизмы --- включения \\
+$\Shv{F},\Shv{G}$ & предпучок (а если сказано <<пучок>> --- пучок) на $X$ \\
+$\Shv{F}(U)$ & сечения $\Shv{F}$ над $U$; иногда $\Gamma(U,\Shv{F})$ \\
+$\res^{V}_{U}\colon\Shv{F}(V)\to\Shv{F}(U)$ &
+ отображение ограничения при $U\subset V$; коротко
+ $s|_{V}:=\res^{V}_{U}(s)$ \\
+$\res_i:=\res^{U_i}_{U}$, $\res_x:=\res^{V_x}_{U}$ &
+ те же ограничения с короткой записью \\
+$\Shv{F}_x$ & слой (пространство ростков) над точкой $x$ \\
+$s_x$, $\tilde s(x)$ & росток (зародыш) сечения $s$ в точке $x$ \\
+$\et(\Shv{F})$ & пространство ростков (<<этажное>> пространство) \\
+$\pi\colon\et(\Shv{F})\to X$ & проекция, $\pi|_{\Shv{F}_x}\equiv x$ \\
+$\Shv{F}^{\#}$ & пучок сечений $\pi$, <<прокачивание>> $\Shv{F}$ \\
+$i\colon\Shv{F}\to\Shv{F}^{\#}$ & канонический гомоморфизм предпучков \\
+$\Shv{F}^{+}$ & секции пучка $\Shv{H}\supset\Shv{F}$, локально
+ принадлежащие $\Shv{F}$ \\
+$\PSh(X),\Sh(X)$ & категории предпучков и пучков на $X$ \\
+$(\mathrm{F1}),(\mathrm{F2})$ & аксиомы единственности и склейки \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Соответствие сканам}
+\leavevmode\par
+\begin{center}\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{0.20\textwidth}p{0.65\textwidth}@{}}
+\toprule
+Скан (стр.\ тетради) & Содержание \\
+\midrule
+photo\_1 (стр.~9) &
+ заголовок <<Лекция 2 (19.09)>>, слово <<прокачивание>>;
+ конструкция $\et(\Shv{F})$, $\pi$, $\Shv{F}^{\#}(U)=\{s\mid\pi\circ s=\id\}$;
+ три свойства пучка (сложение, аксиомы, нейтральный элемент);
+ пример с $A$-группой; <<фундаментальная проблема прокачивания>>;
+ утверждение $\Hom(\Shv{F},\Shv{G})\simeq\Hom(\Shv{F}^{\#},\Shv{G})$
+ и замечание о естественности (две диаграммы) \\
+photo\_2 (стр.~10) &
+ <<внезапная вставка»: проверка (F1) и (F2) для $\Shv{F}^{\#}$
+ с рисунками-«листами»; введение топологии на $\et(\Shv{F})$ по
+ критерию открытости; схема естественного отображения
+ $x\mapsto U\mapsto\Shv{F}(U)\mapsto\tilde s(x)$ \\
+photo\_3 (стр.~11) &
+ проверка того, что $\pi^{-1}(U)$ открыто; диаграмма
+ $F\to\Shv{F}^{\#}$ и инъективность $\Hom(\Shv{F}^{\#},\Shv{G})
+ \hookrightarrow\Hom(\Shv{F},\Shv{G})$; обратное построение $\beta$
+ и проблема единственности ($i(s_1)=i(s_2)$); выбор окрестностей
+ $V_x$ и натурная диаграмма \\
+photo\_4 (стр.~12) &
+ большая коммутативная диаграмма; склейка $g_x,g_y$ аксиомой (F2)
+ пучка $\Shv{G}$; вывод $\Hom(\Shv{F},\Shv{G})\simeq\Hom(\Shv{F}^{\#},
+ \Shv{G})$; утверждение о критерии $F\simeq F'$; формулировка <<Факта>> \\
+photo\_5 (стр.~13) &
+ доказательство <<Факта>> диаграммами: $f\colon A_2\to A_1$,
+ $g\colon A_1\to A_2$, вывод $gf=\id$, $fg=\id$ \\
+photo\_6 (стр.~14) &
+ подпредпучок $\Shv{F}\subset\Shv{H}$, секции $\Shv{F}^{+}$;
+ план доказательства через <<Факт>>; построение
+ $\eta_{\Shv{G}}(\varphi)=\bar\varphi$ \\
+photo\_7 (стр.~15) &
+ окончание: $\eta_{\Shv{G}}$ --- изоморфизм (диаграмма
+ естественности); пример с $k$-формами; ядро, образ,
+ точная последовательность \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Порядок файлов совпадает с рукописной фолиацией: photo\_1 ---
+стр.~9 (продолжение тетради, начатой в лекции~1), photo\_2---10,
+photo\_3---11, photo\_4---12, photo\_5---13,
+photo\_6---14, photo\_7---15.
+
+\subsection{Как пользоваться этим конспектом}
+\leavevmode\par
+\begin{bullets}
+\item Все рисунки пронумерованы (рис.~$N.M$), все коммутативные
+ диаграммы --- отдельной нумерой (диаграмма~$N.M$), все формулы, на
+ которые есть ссылки, --- пронумерованы. Ссылка вида
+ <<см.~диаграмму~\ref{dgm:glue}>> означает конкретную диаграмму
+ с этим номером.
+\item Серые блоки <<Дополнение из книги>> --- материал из книг
+ Годемана и Манина;
+ их можно читать отдельно, основной текст без них самодостаточен.
+\item В доказательствах каждый <<шаг» сопровождается объяснением, зачем
+ он нужен: если непонятен ход рассуждения, смотрите текст между
+ формулами, а не только формулы.
+\end{bullets}
+
+%==================================================================
+\section{Предпучок и пучок: повторение и уточнения}
+%==================================================================
+
+\subsection{Предпучок}
+\leavevmode\par
+\begin{defn}[предпучок]
+Пусть $X$ --- топологическое пространство. \emph{Предпучком} множеств
+(групп, колец $\ldots$) на $X$ называется семейство множеств
+$\{\Shv{F}(U)\}$, поставленных открытым $U\subset X$, вместе с
+отображениями ограничения
+\[
+  \res^{V}_{U}\colon\Shv{F}(V)\longrightarrow\Shv{F}(U)
+  \qquad (U\subset V)
+\]
+такими, что
+\[
+  \res^{U}_{U}=\id,\qquad
+  \res^{U}_{V}\circ\res^{V}_{W}=\res^{U}_{W}
+  \quad\text{при}\quad U\subset V\subset W.
+\]
+Для $s\in\Shv{F}(V)$ пишут $s|_{U}:=\res^{V}_{U}(s)\in\Shv{F}(U)$.
+\end{defn}
+
+Короче: категория открытых множеств $\Top_X$ (объекты --- открытые
+множества, морфизмы --- включения) --- это частный случай естественной
+конструкции, и предпучок --- это контравариантный функтор
+\[
+  \Shv{F}\colon\Top_X^{\mathrm{op}}\longrightarrow \mathrm{Sets}
+\]
+(для абелевых групп, колец и т.\,п. --- с значениями в соответствующей
+категории). Контравариантность --- это и есть то, что $\rho$ переводит
+сечение на большем открытом множестве в сечение на меньшем.
+
+\begin{rem}[что считать сечением]
+Сечение --- это не функция в традиционном смысле, а <<данные, заданные
+на $U$ и уменьшающиеся при уточнении>>. Типовой пример:
+$\Shv{F}(U)$ --- множество непрерывных (или голоморфных, или
+полиномиальных) функций на $U$, а $\rho$ --- ограничение функции.
+Вся теория пучков ровно о том, что таких данных больше, чем
+<<глобальных функций>>, и разрыв между ними измеряется
+несвязностью $U$.
+\end{rem}
+
+\subsection{Пучок: аксиомы (F1) и (F2)}
+\leavevmode\par
+\begin{defn}[пучок]
+Предпучок $\Shv{F}$ называется \emph{пучком}, если для любого открытого
+$U$ и любого покрытия $U=\bigcup_{i\in I}U_i$ выполняются:
+\begin{bullets}
+\item[\textup{(F1)}] \emph{(единственность, согласованность)} если
+ $s,t\in\Shv{F}(U)$ такие, что $s|_{U_i}=t|_{U_i}$ для всех $i$, то
+ $s=t$;
+\item[\textup{(F2)}] \emph{(склейка)} если даны $s_i\in\Shv{F}(U_i)$,
+ согласованные на пересечениях,
+ \[
+   s_i|_{U_i\cap U_j}=s_j|_{U_i\cap U_j}\qquad\text{для всех }i,j,
+ \]
+ то существует $s\in\Shv{F}(U)$ с $s|_{U_i}=s_i$; причём это $s$
+ определено единственным образом.
+\end{bullets}
+\end{defn}
+
+Интуиция:
+\begin{bullets}
+\item (F1) говорит: \emph{локальное равенство --- это глобальное
+ равенство}. Если два глобальных объекта неразличимы на каждом куске
+ покрытия, они совпадают. То есть <<достаточно знать данные на мелких
+ кусках>>.
+\item (F2) говорит: \emph{согласованные локальные данные склеиваются в
+ глобальные}. Обратное к (F1): <<из кусков можно собрать целое>>.
+\end{bullets}
+Ни одно из этих свойств не выполняется для произвольного предпучка;
+именно поэтому <<пучок>> --- отдельное (и гораздо более полезное)
+понятие.
+
+\begin{bookbox}
+\booksrc{Годеман, гл.~II, \S\,1, п.~1.1, с.~129 --- формулировка аксиом
+ (F1), (F2) в терминах <<семейства открытых подмножеств>>; замечание:
+ из (F2) в случае пустого покрытия следует, что $\Shv{F}(\varnothing)$
+ --- одноэлементное множество, поэтому в (F2) достаточно рассматривать
+ пары индексов с непустым пересечением.
+\par\smallskip
+ Манин, \S\,2.1.1---2.1.3, с.~108---110: то же определение в виде системы
+ $\{\Shv{F}(U),\res^{V}_{U}\}$ и формулировка <<пучок --- пучок, если
+ согласованные сечения на покрытии склеиваются и притом единственным
+ образом>>. Обозначение $\Gamma(U,\Shv{F})$ для сечений.
+}
+\end{bookbox}
+
+\subsection{Аксиомы пучка как точная последовательность}
+Для предпучков абелевых групп аксиомы (F1), (F2) можно записать одной
+строкой --- как точность последовательности. Это пригодится в конце
+лекции, когда мы будем говорить о точных последовательностях пучков.
+
+Пусть $U=\bigcup_{i\in I}U_i$ --- фиксированное покрытие. Рассмотрим
+диаграмму~\ref{dgm:exact-pre}.
+
+\begin{diagram}{Аксиомы пучка в виде точности для покрытия
+ $U=\bigcup_i U_i$ (см.~также разбор ниже).\label{dgm:exact-pre}}
+\begin{tikzcd}[cd style,column sep=large]
+0 \ar[r] & \Shv{F}(U) \ar[r,"f"] &
+\displaystyle\prod_{i\in I}\Shv{F}(U_i)
+\ar[r,shift left=5pt,"\gamma"] \ar[r,shift right=5pt,"\delta"'] &
+\displaystyle\prod_{i,j\in I}\Shv{F}(U_i\cap U_j)
+\end{tikzcd}
+\end{diagram}
+
+Пояснение к диаграмме~\ref{dgm:exact-pre}. Читается слева
+направо: стрелка $f$ <<вклеивает>> глобальное сечение в семейство
+локальных, а две стрелки $\gamma$ и $\delta$ с одного множества
+на другое --- это ограничение на пересечении $U_i\cap U_j$
+у $i$-й и у $j$-й компоненты семейства соответственно. Точность
+(равенство $\ker(\gamma-\delta)=\operatorname{Im}f$) и есть
+аксиомы пучка одной строкой: «согласованные семейства --- ровно
+те, что являются ограничениями глобальных сечений», --- из
+неё следуют и единственность (F1), и склейка (F2); нулевой член
+слева гарантирует, что $f$ ничего не теряет. Формулы компонент
+--- в замечании ниже.
+
+\begin{rem}[что означают $f,\gamma,\delta$]\label{rem:gd}
+Все отображения поэлементные.
+\begin{conditions}
+\item Первая стрелка $f$ <<вклеивает>> глобальное сечение в семейство
+ локальных:
+ \begin{equation}\label{eq:f}
+  f(s)=\bigl(\,\res^{U_i}_{U}(s)\,\bigr)_{i\in I}
+  =\bigl(\,s|_{U_i}\,\bigr)_{i\in I}
+  \in\prod_{i\in I}\Shv{F}(U_i).
+ \end{equation}
+\item Дальше стоят \emph{две} стрелки с одним и тем же множеством
+ значений: они берут ограничение на пересечение $U_i\cap U_j$
+ соответственно у $i$-й и у $j$-й компоненты семейства
+ $(s_i)_{i\in I}$:
+ \begin{equation}\label{eq:gd}
+  \gamma\bigl((s_i)_i\bigr)_{ij}=\res^{U_i\cap U_j}_{U_i}(s_i),
+  \qquad
+  \delta\bigl((s_i)_i\bigr)_{ij}=\res^{U_i\cap U_j}_{U_j}(s_j).
+ \end{equation}
+\item Семейство $(s_i)$ называется \emph{согласованным}, если
+ $\gamma\bigl((s_i)\bigr)=\delta\bigl((s_i)\bigr)$, т.\,е.\ если
+ $s_i|_{U_i\cap U_j}=s_j|_{U_i\cap U_j}$ для всех $i,j$. Иными словами,
+ $\gamma$ и $\delta$ --- одно и то же действие <<взять ограничение на
+ пересечение>>, отнесённое к разным компонентам; их равенство и есть
+ условие согласованности из (F2).
+\end{conditions}
+Вместо пары стрелок $\gamma,\delta$ часто пишут одну $\gamma-\delta$:
+\begin{equation}\label{eq:gmd}
+ (\gamma-\delta)\bigl((s_i)\bigr)_{ij}
+ =\res^{U_i\cap U_j}_{U_i}(s_i)-\res^{U_j\cap U_i}_{U_j}(s_j).
+\end{equation}
+\end{rem}
+
+Теперь аксиомы:
+\begin{bullets}
+\item \textbf{Точность в первом месте} ($f$ --- инъекция) --- это (F1):
+ из $\res^{U_i}_{U}(s)=0$ для всех $i$ следует $s=0$, а для групп ---
+ из равенства нулю; обобщённо: если $s|_{U_i}=t|_{U_i}$ для всех $i$,
+ то $s=t$.
+\item \textbf{Точность во втором месте} ($\ker(\gamma-\delta)=
+ \operatorname{Im}f$) --- это (F2): слева направо --- любое согласованное
+ семейство $(s_i)$ является семейством вида~\eqref{eq:f}, т.\,е.
+ склеивается в глобальное $s$ (и притом единственное); справа налево ---
+ глобальное сечение даёт согласованное семейство.
+\item \textbf{Точность в последнем месте} не требуется: не всякое
+ семейство из $\prod_{i,j}\Shv{F}(U_i\cap U_j)$ рождается из
+ семейства $(s_i)$.
+\end{bullets}
+
+\begin{bookbox}
+\booksrc{Манин, \S\,2.1.4, с.~110 (эта диаграмма) и \S\,2.1.5, с.~111
+ (фундаментальный пример предпучка, который не пучок --- рис.~2.2 книги,
+ он же рисунок~\ref{fig:circle} ниже).}
+\end{bookbox}
+
+\subsection{Пустое открытое множество}
+Из (F2) для пустого покрытия $U=\varnothing$ следует, что
+$\Shv{F}(\varnothing)$ --- одноэлементное множество (в абелевой
+категории: нулевой элемент). Поэтому при проверке (F2) можно
+рассматривать только пары индексов с непустым пересечением: если
+$U_i\cap U_j=\varnothing$, условие согласованности на нём ---
+тривиально, ведь ограничение в пустое множество --- единственное
+отображение в однозначное множество.
+
+\subsection{Зачем нужны именно пучки: два примера}
+\leavevmode\par
+\begin{exm}[склеивание двух прямых]
+Пусть $X_1\simeq X_2\simeq\mathbb{R}$, $U_1\simeq U_2\simeq
+\mathbb{R}\setminus\{0\}$ (две копии прямой без нуля). Склеиваем
+$X_1\sqcup X_2$ по $U_1\sqcup U_2$ с помощью отображения $f$. При
+$f=\id$ получается прямая с раздвоенной точкой, при $f(x)=1/x$ ---
+проективная прямая (рисунок~\ref{fig:skleivanie}). Топологии
+$X_1\supset U_1$ и $X_2\supset U_2$ одинаковы в обоих случаях,
+и результат определяет только функция $f$. Поэтому склеивать
+нужно вместе с функциями, т.\,е. работать с пучками: голая топология
+разницы между $f=\id$ и $f(x)=1/x$ не видит.
+\end{exm}
+
+\begin{risunok}{Склейка двух прямых: иллюстрация к \S\,2.1 книги Манина
+ (рис.~2.1).\label{fig:skleivanie}}
+\resizebox{\linewidth}{!}{\begin{tikzpicture}[>=Stealth,font=\small]
+  % а) Манин, рис. 2.1а: две копии прямой, стрелки --- сшиваемые пары f = id;
+  % у нулей стрелки нет: 0 из первой и 0 из второй остаются двумя точками
+  \draw[fig base] (-2.1,2.5) -- (2.1,2.5);
+  \draw[fig base] (-2.1,1.5) -- (2.1,1.5);
+  \fill (0,2.5) circle (2.4pt);
+  \fill (0,1.5) circle (2.4pt);
+  \node[above] at (0,2.5) {0};
+  \node[below] at (0,1.5) {0};
+  \foreach \x in {-1.5,-0.9,0.9,1.5}
+    \draw[<->,line width=0.7pt,draw=text] (\x,1.62) -- (\x,2.38);
+  \node[below,font=\footnotesize] at (0,0.75)
+    {(а) $f=\id$: прямая с раздвоенной точкой};
+  % б) проективная прямая
+  \begin{scope}[xshift=6.6cm]
+    \draw[fig base] (0,2.0) circle (1.0);
+    \fill (1.0,2.0) circle (2.4pt);
+    \node[below right,font=\footnotesize] at (1.05,2.1) {$\infty$};
+    \node[below,font=\footnotesize] at (0,0.15)
+      {(б) $f(x)=1/x$: проективная прямая};
+  \end{scope}
+\end{tikzpicture}}
+\end{risunok}
+
+Пояснение к рисунку~\ref{fig:skleivanie}. Слева --- результат
+склейки при $f=\id$: нулевые точки двух копий не сшиваются
+(стрелками показаны сшиваемые пары), получается прямая
+с раздвоенной точкой: $0_1\neq 0_2$, и разнести их нельзя ---
+любые окрестности пересекаются. Справа --- та же операция при
+$f(x)=1/x$: <<концы>> прямых сшиваются через $1/x$, результат ---
+окружность (проективная прямая), на которой обе бывшие нулевые
+точки уже разделимы. Топологически $U_1,U_2$ одинаковы в обоих
+случаях, различается только $f$: поэтому одной топологии
+недостаточно --- нужно склеивать вместе с функциями, то есть
+работать с пучками.
+
+\begin{exm}[предпучок, не являющийся пучком]\label{exm:circle}
+$X$ --- окружность, $\mathcal{O}(U)$ --- группа $\mathbb{R}$-значных
+непрерывных функций на $U$, $\underline{\mathbb{Z}}$ --- <<постоянный>>
+пучок. Рассмотрим предпучок
+$\Shv{P}(U)=\mathcal{O}(U)/\underline{\mathbb{Z}}(U)$.
+Пусть $X=U_1\cup U_2$, причём $U_1\cap U_2=V_1\sqcup V_2$ --- два
+разрывных куска. Выберем $f_1\in\mathcal{O}(U_1)$, $f_2\in
+\mathcal{O}(U_2)$ так, что
+\[
+ \res^{V_1}_{U_1}(f_1)-\res^{V_1}_{U_2}(f_2)=0,
+ \qquad
+ \res^{V_2}_{U_1}(f_1)-\res^{V_2}_{U_2}(f_2)=1.
+\]
+Классы в $\Shv{P}(V_1)$ и $\Shv{P}(V_2)$ согласованы, но глобального
+сечения нет: нельзя устранить рассогласование на $V_2$, потому что
+<<целое число>> нельзя поправить непрерывной функцией. Причина ---
+неодносвязность окружности: аксиома (F2) здесь нарушается.
+\end{exm}
+
+\begin{risunok}{Окружность: классы $f_1$ и $f_2$ согласованы в
+ $\Shv{P}$, но глобального сечения нет (Манин, рис.~2.2).
+  \label{fig:circle}}
+\begin{tikzpicture}[>=Stealth,font=\small]
+  \draw[fig base] (0,0) circle (1.9);
+  % дуги: U_1 сверху (синяя), U_2 снизу (красная), вне окружности
+  \draw[fig leafA] (1.8619,1.075)
+    arc[start angle=30,end angle=150,radius=2.15];
+  \draw[fig sect] (1.8619,-1.075)
+    arc[start angle=-30,end angle=-150,radius=2.15];
+  \node[primary,font=\small] at (0,2.6) {$U_1$};
+  \node[danger,font=\small] at (0,-2.6) {$U_2$};
+  \node[font=\small] at (-1.25,0) {$V_1$};
+  \node[font=\small] at (1.25,0) {$V_2$};
+  \node[fig note,primary] at (-1.45,2.2) {$f_1$};
+  \node[fig note,danger] at (1.45,-2.2) {$f_2$};
+  % скачок +1 на V_2
+  \draw[->,danger,line width=1pt]
+    (2.2517,1.3) arc[start angle=30,end angle=-30,radius=2.6];
+  \node[fig note,danger] at (3.05,0.1) {$+1$};
+\end{tikzpicture}
+\end{risunok}
+
+Пояснение к рисунку~\ref{fig:circle}. Окружность распадается на
+два открытых куска: $U_1$ (верхняя дуга, синяя) и $U_2$ (нижняя,
+красная); их пересечение --- два разрывных куска $V_1$ слева и
+$V_2$ справа. Синяя и красная линии --- это <<значения>> функций
+$f_1$ и $f_2$ на соответствующих кусках. На $V_1$ концы дуг
+совпадают (разность равна $0$), а на $V_2$ расходятся на $1$
+(стрелка $+1$): согласованность есть, но глобального сечения
+нет, потому что <<поправить>> скачок непрерывной функцией
+нельзя --- в этом и состоит нарушение (F2).
+
+%==================================================================
+\section[Ростки и слои: $\Shv{F}_x$]{Ростки и слои: $\Shv{F}_x$}
+%==================================================================
+
+\subsection{Определение}
+\leavevmode\par
+\begin{defn}[слой, росток]
+Пусть $\Shv{F}$ --- предпучок на $X$, $x\in X$. \emph{Слоем}
+(пространством ростков над $x$) называется прямой предел
+\begin{equation}\label{eq:stalk}
+ \Shv{F}_x=\dirlim_{U\ni x}\Shv{F}(U),
+\end{equation}
+где $U$ пробегает открытые окрестности точки $x$, упорядоченные
+включением (по контравариантности $\Shv{F}$ предел --- прямой над
+категорией окрестностей).
+\end{defn}
+
+Элементы $\Shv{F}_x$ называются \emph{ростками} (зародышами). У
+предельной конструкции есть наглядное описание, которое удобно
+использовать на практике: элементы $\Shv{F}_x$ --- это классы
+эквивалентности пар $(U,s)$, где $U\ni x$ открыто, $s\in\Shv{F}(U)$, а
+эквивалентность
+\[
+ (U,s)\sim(V,t)
+ \quad\Longleftrightarrow\quad
+ \exists\, W\ni x,\ W\subset U\cap V:\ \res^{W}_{U}(s)=\res^{W}_{V}(t).
+\]
+Класс пары $(U,s)$ обозначают $s_x$ или $\tilde s(x)$: <<росток
+сечения $s$ в точке $x$>>. Так записывается вычислительное правило:
+
+\begin{quote}
+\itshape Чтобы найти $s_x$, возьмите любую (достаточно малую)
+окрестность $U$ точки $x$ и посмотрите, чем является $s$ на ней;
+если на более малой окрестности $s$ совпал с другим сечением ---
+ростки совпадают.
+\end{quote}
+
+\begin{exm}
+Пусть $\Shv{F}(U)$ --- непрерывные $\mathbb{R}$-значные функции на
+$U$, $\rho$ --- ограничение. Тогда $\Shv{F}_x$ --- это <<локальные
+функции в точке $x$>>: два представителя $(U,f)$ и $(V,g)$ дают один
+и тот же росток, если $f=g$ на некоторой окрестности $x$. Это
+классическая конструкция зародыша функции из математического анализа.
+\end{exm}
+
+\begin{exm}[постоянный предпучок]
+Если $\Shv{F}(U)=A$ для всех непустых $U$ и все $\rho$ ---
+тождественные, то в пределе ничего не <<схлопывается>>:
+$\Shv{F}_x=A$ для всякой $x$. Подробнее --- в
+\S\,\ref{sec:const}.\end{exm}
+
+\begin{risunok}{Как строится росток: вложенные окрестности
+ $U\supset V\supset W\ni x$ и цепочка ограничений;
+ росток --- класс эквивалентности <<стопки>> сечений.}
+\begin{tikzpicture}[>=Stealth,font=\small]
+  \draw[fig base] (0,0) ellipse (2.5 and 1.0);
+  \draw[fig open] (0,0) ellipse (1.6 and 0.62);
+  \draw[danger,line width=1pt,dotted] (0,0) ellipse (0.8 and 0.3);
+  \fill (0,0) circle (2.8pt);
+  \node[below right] at (0.12,-0.17) {$x$};
+  \node[left] at (-2.5,0.42) {$U$};
+  \node[left] at (-1.6,-0.45) {$V$};
+  \node[above right] at (0.7,0.42) {$W$};
+  % цепочка ограничений
+  \node at (4.4,1.2)  {$\Shv{F}(U)$};
+  \node at (4.4,0)    {$\Shv{F}(V)$};
+  \node at (4.4,-1.2) {$\Shv{F}(W)$};
+  \node at (6.7,-1.2) {$\Shv{F}_x$};
+  \draw[->] (4.4,0.9) -- (4.4,0.3)
+    node[midway,right,font=\footnotesize] {$\res$};
+  \draw[->] (4.4,-0.9) -- (4.4,-0.3)
+    node[midway,right,font=\footnotesize] {$\res$};
+  \draw[->] (5.35,-1.2) -- (6.05,-1.2);
+\end{tikzpicture}
+\end{risunok}
+
+Пояснение к рисунку. Слева --- вложенные окрестности точки $x$:
+чёрная сплошная $U$, синяя пунктирная $V$, красная точками $W$;
+в центре --- сама точка $x$. Справа --- что делает с этим
+предпучок: сечение на $U$ ограничивается до $V$, затем до $W$
+(стрелки $\rho$), и в пределе по такой цепочке получается росток
+$\Shv{F}_x$. Росток и <<стопка>> сечений --- одно и то же:
+два набора дают один и тот же росток, если они совпадают на
+какой-то более мелкой окрестности.
+
+\subsection{Почему слои важны}
+Из лекции~1 мы помним главное правило: \emph{пучок определяется своими
+слоями}, а точнее --- гомоморфизм пучков, который поэлементно (в каждом
+слое) является изоморфизмом, есть изоморфизм. Это следствие того, что
+аксиома (F1) позволяет <<восстановить>> глобальное сечение по его
+росткам. Поэтому <<прокачивание>>, которое мы построим, ничего не
+потеряет: слои $\Shv{F}_x$ и $\Shv{F}^{\#}_x$ будут совпадать.
+
+\begin{bookbox}
+\booksrc{Манин, \S\,2.1.6, с.~112 --- определение слоя
+ $\Shv{P}_x=\dirlim \Shv{P}(U)$ и ростка.
+\par\smallskip
+ Годеман, гл.~II, \S\,1, п.~1.2, с.~130---133 --- накрывающее
+ пространство, связанное с пучком (в оригинале \emph{espace étalé};
+ переводчик предпочёл <<накрывающее пространство>>).
+}
+\end{bookbox}
+
+%==================================================================
+\section[Пространство ét(F) и его топология]
+ {Пространство $\et(\Shv{F})$ и его топология}
+%==================================================================
+
+\subsection{Множество ростков}
+\leavevmode\par
+\begin{defn}
+Положим
+\begin{equation}\label{eq:etale-set}
+ \et(\Shv{F}):=\coprod_{x\in X}\Shv{F}_x
+\end{equation}
+--- разность множеств слоёв, и обозначим через
+$\pi\colon\et(\Shv{F})\to X$ проекцию, отображающую слой $\Shv{F}_x$
+в точку $x$. Тогда $\pi^{-1}(x)=\Shv{F}_x$.
+\end{defn}
+
+Пока это просто множество: точки пространства --- это пары
+<<точка базы + росток в ней>>. Осталось дать топологию.
+
+\subsection{Топология}
+\leavevmode\par
+\begin{defn}[топология на $\et(\Shv{F})$]
+На $\et(\Shv{F})$ вводится наиболее тонкая топология, при которой все
+отображения
+\[
+ s\colon U\longrightarrow\et(\Shv{F}),\qquad
+ s(x)=s_x\ \ (s\in\Shv{F}(U)),
+\]
+непрерывны.
+\end{defn}
+
+Здесь стоит понять, что именно определено. У нас есть семейство
+отображений $s\colon U\to\et(\Shv{F})$ (одно для каждого открытого $U$
+и каждого $s\in\Shv{F}(U)$). Требуем, чтобы они все были непрерывными,
+и берём наиболее тонкую топологию, которая это обеспечивает: множество
+$G\subset\et(\Shv{F})$ объявляется открытым тогда и только тогда, когда
+прообраз $s^{-1}(G)$ открыт для всякой такой секции $s$. Семейство таких
+множеств образует топологию. Эквивалентная, <<вычислимая>> формулировка
+--- критерий открытости.
+
+\begin{thm}[критерий открытости]\label{thm:open}
+Подмножество $G\subset\et(\Shv{F})$ открыто тогда и только тогда, когда
+для всякого открытого $U\subset X$ и всякого $s\in\Shv{F}(U)$ множество
+\begin{equation}\label{eq:crit}
+ \{\,x\in U:\ s_x\in G\,\}=s^{-1}(G)\subset U
+\end{equation}
+открыто в $U$.
+\end{thm}
+
+\begin{proof}
+($\Leftarrow$) Обозначим через $\tau$ семейство подмножеств $G$,
+удовлетворяющих условию. Проверим, что $\tau$ --- топология.
+$\varnothing$ и $\et(\Shv{F})$ проходят условие очевидно. Объединение:
+если $G=\bigcup_\alpha G_\alpha$, то
+$s^{-1}(G)=\bigcup_\alpha s^{-1}(G_\alpha)$ --- объединение открытых.
+Пересечение: $s^{-1}(G_1\cap G_2)=s^{-1}(G_1)\cap s^{-1}(G_2)$ ---
+пересечение открытых. Значит $\tau$ --- топология, и по построению
+все $s$ в ней непрерывны. Любая другая топология, делающая все $s$
+непрерывными, состоит только из множеств, удовлетворяющих условию
+\eqref{eq:crit}, то есть содержится в $\tau$. Поэтому $\tau$ --- наиболее
+тонкая такая топология.
+
+($\Rightarrow$) Пусть топология на $\et(\Shv{F})$ выбрана так, как в
+определении, и $G$ открыто. Тогда $s^{-1}(G)$ --- прообраз открытого
+множества при непрерывном отображении, значит открыт.
+\end{proof}
+
+\sectionsrc{формулировка критерия --- photo\_2 (стр.~10) и
+ photo\_3 (стр.~11): <<подмножество $G\subset\et(\Shv{F})$
+ открыто $\Leftrightarrow$ множество всех ростков, в которые попадают
+ локации сечения, открыто»; на стр.~11 отдельно проверяется, что
+ прообраз $\pi^{-1}(U)$ открыт: <<$H=\pi^{-1}(U)$ состоит из
+ всевозможных ростков $s_x$, $x\in U$, $s\in\Shv{F}(U)$, тогда оно
+ открыто, т.к. $U$ открыто».}
+
+\subsection{\texorpdfstring{$\pi$}{} --- локальный гомеоморфизм}
+\leavevmode\par
+\begin{thm}\label{thm:localhomeo}
+Отображение $\pi\colon\et(\Shv{F})\to X$ является локальным
+гомеоморфизмом: для каждой точки $\xi\in\et(\Shv{F})$ найдётся открытая
+окрестность, на которой $\pi$ --- гомеоморфизм на открытое подмножество
+$X$.
+\end{thm}
+
+\begin{proof}
+Сначала проверим непрерывность $\pi$. Для любого открытого $O\subset X$
+и всякой секции $t\in\Shv{F}(V)$ имеем
+$t^{-1}(\pi^{-1}(O))=V\cap O$, открытое в $V$; по критерию
+открытости $\pi^{-1}(O)$ открыто.
+Пусть $\xi=s_x\in\Shv{F}_x$ для некоторого $s\in\Shv{F}(U)$.
+Рассмотрим отображение $\widetilde s:U\to\et(\Shv{F})$,
+$y\mapsto s_y$. Оно непрерывно по определению топологии и
+$\pi\circ\widetilde s=\id_U$, поэтому инъективно. Покажем, что его
+образ открыт. Для любой секции $t\in\Shv{F}(V)$ по критерию
+\ref{thm:open} имеем
+\[
+ t^{-1}(\widetilde s(U))=\{y\in V\cap U:t_y=s_y\}.
+\]
+Если $t_y=s_y$, то по определению равенства ростков существует открытая
+окрестность $W_y\subset V\cap U$ точки $y$, на которой
+$t|_{W_y}=s|_{W_y}$. Значит, указанное множество открыто в $V$;
+следовательно, $\widetilde s(U)$ открыто в $\et(\Shv{F})$.
+Ограничение $\pi|_{\widetilde s(U)}$ непрерывно, а его обратное ---
+$\widetilde s$, поэтому это гомеоморфизм на открытое $U$. Так как
+$\xi\in\widetilde s(U)$, $\pi$ является локальным гомеоморфизмом.
+\end{proof}
+
+Следствие: $(\et(\Shv{F}),\pi)$ --- étale-пространство над $X$:
+у каждой его точки есть окрестность, отображающаяся гомеоморфно на
+открытое подмножество базы. В общем случае $\pi$ не обязано быть
+накрытием и $\pi^{-1}(U)$ не обязано быть произведением
+$U\times(\text{дискретное множество})$.
+
+\begin{bookbox}
+\booksrc{Годеман, гл.~II, \S\,1, п.~1.1, с.~129---130 --- язык
+ расслоений. \emph{Расслоённым пространством} с базой $X$ называют
+ пару $(E,p)$, где $E$ --- топологическое пространство, а
+ $p\colon E\to X$ непрерывно; множество $E(x)=p^{-1}(x)$ обычно
+ называют слоем над точкой $x$ (примечание ред., с.~129).
+ \emph{Сечением} над подмножеством $M\subset X$ называется
+ непрерывное $s\colon M\to E$ с $p\circ s=\id$; множество $E(U)$
+ всех сечений над открытым $U$, с ограничениями, --- это пучок
+ (пучок ростков сечений расслоённого пространства). Примечание
+ переводчика там же: автор писал \emph{espace étalé}, русский
+ перевод предпочёл <<накрывающее пространство>> --- в более
+ широком, чем обычно, смысле; \emph{ét} в $\et(\Shv{F})$ ---
+ от этого же термина.}
+\end{bookbox}
+
+\begin{center}
+\normalsize
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.30\textwidth}
+ >{\raggedright\arraybackslash}p{0.46\textwidth}
+ >{\raggedright\arraybackslash}p{0.15\textwidth}@{}}
+\toprule
+\textbf{Из Годемана (расслоения)} &
+\textbf{В этой лекции (пучки)} &
+\textbf{Где} \\
+\midrule
+пара $(E,p)$, база $X$ & $\pi\colon\et(\Shv{F})\to X$ & \S\,4.1 \\
+слой $E(x)=p^{-1}(x)$ & слой ростков $\Shv{F}_x$ & \S\,3.1 \\
+сечение $s$, $p\circ s=\id$ & элемент $\Shv{F}^{\#}(U)$ &
+ \S\,4.4--4.5 \\
+$p$ --- локальный гомеоморфизм (накрывающее пространство) &
+ $\pi$ --- локальный гомеоморфизм & \S\,4.3 \\
+пучок ростков сечений $U\mapsto E(U)$ & $\Shv{F}^{\#}$ & \S\,5 \\
+изоморфизм расслоений & изоморфизм пучков & \S\,8 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\par\smallskip
+
+\subsection{Сечение как непрерывный разрез}
+Рисунок~\ref{fig:etale} показывает конструкцию целиком: над каждой
+точкой $X$ висит свой слой, а сечение --- это <<разрез>>, который над
+каждой точкой выбирает росток и делает это непрерывно.
+
+\begin{risunok}{Проекция $\pi\colon\et(\Shv{F})\to X$: над каждой
+ точкой --- слой ростков; сечение $s\in\Shv{F}^{\#}(U)$ --- непрерывный
+ разрез, проецирующийся в себя ($\pi\circ s=\id$).\label{fig:etale}}
+\begin{tikzpicture}[>=Stealth,font=\small]
+  % база X с открытым U
+  \draw[fig base] (0,0) ellipse (3.6 and 0.9);
+  \node[below right] at (3.3,-0.55) {$X$};
+  \begin{scope}
+    \clip (0,0) ellipse (3.6 and 0.9);
+    \fill[primary!10] (-1.8,0) ellipse (1.9 and 0.85);
+  \end{scope}
+  \draw[fig open] (-1.8,0) ellipse (1.9 and 0.85);
+  \node[primary,below] at (-1.8,-1.25) {$U$};
+  % этажёрка ét(F) — без рамки
+  \node[anchor=north west] at (-4.15,5.15) {$\et(\Shv{F})$};
+  % волокна и ростки
+  \draw[fig fiber] (-2.6,0.63) -- (-2.6,4.9);
+  \draw[fig fiber] (-0.9,0.88) -- (-0.9,4.9);
+  \draw[fig fiber] ( 1.4,0.83) -- ( 1.4,4.9);
+  \draw[fig fiber] ( 3.0,0.50) -- ( 3.0,4.9);
+  \foreach \x/\y in {-2.6/1.7,-2.6/3.8,-0.9/2.2,-0.9/4.2,
+                     1.4/1.9,1.4/3.9,3.0/2.3,3.0/4.3}
+    \fill (\x,\y) circle (2.4pt);
+  \foreach \x/\y in {-2.6/2.6,-0.9/3.2}
+    \fill[danger] (\x,\y) circle (2.6pt);
+  % сечение над U
+  \draw[fig sect,smooth] plot coordinates
+    {(-3.45,2.35) (-2.6,2.6) (-0.9,3.2) (0.15,3.05)};
+  \node[danger] at (-0.3,3.62) {$s$};
+  % слой над точкой x
+  \draw[decorate,decoration={brace,mirror,raise=4pt}]
+    (-2.6,1.7) -- (-2.6,3.8);
+  \node[rotate=90,anchor=south,font=\footnotesize] at (-3.4,2.75)
+    {$\pi^{-1}(x)=\Shv{F}_x$};
+  % проекция
+  \draw[->,thick] (4.75,5.0) -- (4.75,0.35);
+  \node at (4.98,2.7) {$\pi$};
+\end{tikzpicture}
+\end{risunok}
+
+Пояснение к рисунку~\ref{fig:etale}. Прямоугольник сверху ---
+пространство ростков $\et(\Shv{F})$, овал снизу --- база $X$.
+Вертикальные пунктирные линии --- волокна $\pi^{-1}(x)$: над
+каждой точкой $x$ висит свой слой ростков (столбик чёрных точек),
+скобкой слева показано волокно над одной точкой,
+$\pi^{-1}(x)=\Shv{F}_x$. Синим выделено открытое $U\subset X$;
+красная кривая $s$ --- сечение над $U$: для каждой точки $x\in U$
+она выбирает росток (красные точки на волокнах), причём выбор
+меняется непрерывно, поэтому кривая не рвётся. Стрелка $\pi$
+--- проекция вниз, и $\pi\circ s=\id$ означает: каждый выбранный
+росток лежит ровно над своей точкой.
+
+\subsection{Сечение и мульти-секция}
+Непрерывность $s$ означает, что выбор ростков по точкам $x\in U$
+происходит <<плавно>>: множество $\{s(x):x\in U\}$ открыто в
+$\et(\Shv{F})$. Полезно противопоставить этому произвольный выбор
+ростков (рисунок~\ref{fig:multisection}): можно для каждой точки $U$
+произвольно вытащить из слоя какой угодно росток --- получится
+<<мульти-секция>>, но, вообще говоря, не сечение.
+
+\begin{risunok}{Сечение --- непрерывный выбор ростков (красное); синий
+ произвольный выбор ростков по точкам $U$ сечением не является.
+ Формально $\Shv{F}^{\#}(U)=\{s\mid(\pi\circ s)(U)=\id_U\}$.
+  \label{fig:multisection}}
+\begin{tikzpicture}[>=Stealth,font=\small]
+  \draw[fig base] (0,0) ellipse (3.4 and 0.75);
+  \node[below] at (0,-0.8) {$U$};
+  \foreach \x/\top in {-2.6/0.483,-1.3/0.693,0/0.75,1.3/0.693,2.6/0.483}
+    \draw[fig fiber] (\x,\top) -- (\x,3.5);
+  \foreach \x in {-2.6,-1.3,0,1.3,2.6}
+    \foreach \y in {1.5,2.4,3.2} \fill (\x,\y) circle (2.4pt);
+  % непрерывное сечение
+  \draw[fig sect,smooth] plot coordinates
+    {(-3.0,1.2) (-2.6,1.5) (-1.3,2.4) (0,3.2) (1.3,2.4) (2.6,1.5) (3.0,1.2)};
+  \node[danger,above] at (0,3.55) {$s\in\Shv{F}^{\#}(U)$};
+  % произвольная мульти-секция
+  \fill[warning] (-2.6,2.4) circle (3.2pt);
+  \fill[warning] (0,1.5) circle (3.2pt);
+  \fill[warning] (2.6,3.2) circle (3.2pt);
+  \draw[warning,dashed] (-2.6,2.4) -- (0,1.5) -- (2.6,3.2);
+  \node[warning,font=\footnotesize] at (0,-1.95)
+    {произвольный выбор ростков: мульти-секция, не сечение};
+\end{tikzpicture}
+\end{risunok}
+
+Пояснение к рисунку~\ref{fig:multisection}. Внизу --- открытое
+$U\subset X$, вверх от него идут волокна: столбики ростков над
+точками $U$. Красная кривая --- сечение: она соединяет ростки в
+непрерывный <<разрез>> и проецируется в $U$ «на себя». Синие
+точки --- произвольный выбор ростка над каждой точкой $U$:
+соединённые пунктиром, они скачут между уровнями, выбор
+не непрерывен, поэтому сечением не является.
+
+\begin{bookbox}
+\booksrc{Годеман, гл.~II, \S\,1, п.~1.3, с.~133 --- сечения
+ определяются над произвольным подмножеством $M\subset X$, не
+ только над открытым. При этом (F1) остаётся осмысленной и верной
+ без открытости, а (F2) --- нет: иначе любое отображение
+ $s\colon X\to E$ с $p\circ s=\id$ было бы непрерывным, ведь
+ $X$ распадается на одноточечные множества. Теорема~1.3.1 там же:
+ склейка сечений работает на локально конечном \emph{замкнутом}
+ покрытии.\par\smallskip
+ Манин, \S\,1.10, с.~63 --- расслоенное произведение;
+ \S\,1.12, с.~77---79 (определение~1.12.9, с.~79): векторное
+ расслоение --- это семейство векторных пространств, локально
+ тривиальное в каждой точке. Это прямой прототип будущего пучка
+ модулей: <<расслоение>> в алгебраизированном виде.}
+\end{bookbox}
+
+\subsection{Нехаусдорфовость}
+\leavevmode\par
+\begin{rem}[нехаусдорфовость]
+Даже если $X$ хаусдорфово, $\et(\Shv{F})$, вообще говоря, не
+хаусдорфово. По Годеману (Замечание 1.2.4, с.~133): если
+$\et(\Shv{F})$ отделимо, то два сечения $s,t$ над открытым $U$,
+совпадающие в некоторой точке, равны во всей связной компоненте,
+т.\,е. в пучке действует <<принцип аналитического продолжения>>.
+Например, пучок ростков голоморфных функций на комплексном
+многообразии отделим, а пучок ростков непрерывных функций --- нет.
+\end{rem}
+
+\begin{risunok}{Пример нехаусдорфова $\et(\Shv{F})$: $f_1$ и $f_2$
+ совпадают на $[0,\tfrac12]$ и расходятся дальше. Ростки над точкой
+ $\tfrac12$ различны, но любые их окрестности пересекаются, так как
+ листы соединяются слева (иллюстрация к Манину, рис.~2.3, и к заметке
+ Годемана 1.2.4).\label{fig:nonhausdorff}}
+\begin{tikzpicture}[>=Stealth,font=\small]
+  % левый график: f_1 и f_2
+  \draw[->] (-0.3,0) -- (4.45,0);
+  \draw[->] (0,-0.3) -- (0,3.15);
+  \draw[fig sect,dashed] (0.3,0.15) -- (4.15,0.15);
+  \draw[fig leafA,smooth] plot coordinates
+    {(0.3,0.15) (1.7,0.15) (2.5,0.5) (3.3,1.4) (4.1,2.45)};
+  \draw (1.7,0) -- (1.7,-0.09);
+  \node[below] at (1.7,-0.36) {$\tfrac12$};
+  \node[below left] at (0.05,-0.1) {$0$};
+  \node[primary] at (3.95,2.62) {$f_1$};
+  \node[danger] at (3.5,0.45) {$f_2$};
+  % правая панель: ét(F)
+  \begin{scope}[xshift=6.4cm]
+    \node[anchor=south west] at (-0.3,3.05) {$\et(\Shv{F})$};
+    \draw[line width=1.4pt] (-0.3,2.1) -- (1.7,2.1);
+    \draw[fig leafA,smooth] plot coordinates
+      {(1.7,2.1) (2.7,2.45) (4.3,2.85)};
+    \draw[fig sect,smooth] plot coordinates
+      {(1.7,2.1) (2.7,1.65) (4.3,1.25)};
+    \fill (2.7,2.45) circle (2.6pt);
+    \fill (2.7,1.65) circle (2.6pt);
+    \draw[<->,gray!70!black,line width=0.6pt] (2.7,1.82) -- (2.7,2.28);
+    \node[fig note,align=center] at (3.35,0.55)
+      {окрестности\\пересекаются};
+    \node[primary] at (4.0,2.45) {$f_1$};
+    \node[danger] at (3.7,1.25) {$f_2$};
+    \draw[fig fiber] (1.7,2.1) -- (1.7,0.15);
+    \node at (1.7,-0.36) {$\tfrac12$};
+  \end{scope}
+\end{tikzpicture}
+\end{risunok}
+
+Пояснение к рисунку~\ref{fig:nonhausdorff}. Слева --- графики
+двух функций: синий $f_1$ и красный пунктирный $f_2$ совпадают
+на отрезке $[0,\tfrac12]$ (участок одного цвета) и дальше
+расходятся. Справа --- как это выглядит в $\et(\Shv{F})$: слева
+от отметки $\tfrac12$ обе кривые лежат в одном и том же листе
+(общий чёрный отрезок), а справа расходятся на два разных листа.
+Над точкой $\tfrac12$ два ростка --- две разные точки (чёрные
+точки, соединённые стрелкой), но любые их окрестности
+обязательно пересекаются, раз листы слева соединены. Отсюда:
+$\et(\Shv{F})$ не хаусдорфово.
+
+\begin{bookbox}
+\booksrc{Годеман, гл.~II, \S\,1, п.~1.2, с.~130---133: топология
+  вводится как <<наиболее тонкая, при которой отображения $s$
+ непрерывны>>, и доказывается критерий открытости.
+ \textbf{Теорема 1.2.1 (Годеман, с.~132):} всякий пучок множеств с
+ базой $X$ изоморфен пучку ростков некоторого накрывающего пространства
+ над $X$, определённого однозначно с точностью до изоморфизма.
+\par\smallskip
+ Манин, \S\,2.1.8, с.~113---114 --- эквивалентное определение пучка:
+ пара $(Y_{\Shv{F}},r\colon Y_{\Shv{F}}\to X)$, где $r$ локально ---
+ гомеоморфизм, а сечения $\Shv{F}(U)$ --- отображения $s\colon U\to
+ Y_{\Shv{F}}$ с $r\circ s=\id$. Обратно, из пучка получается
+ $Y_{\Shv{F}}=\coprod_x\Shv{F}_x$ с топологией, порождённой сечениями.
+}
+\end{bookbox}
+
+%==================================================================
+\section[Пучок сечений $\Shv{F}^{\#}$]
+ {Пучок сечений $\Shv{F}^{\#}$}
+%==================================================================
+
+\begin{defn}[пучок $\Shv{F}^{\#}$]
+\begin{equation}\label{eq:Fsharp}
+ \Shv{F}^{\#}(U):=\bigl\{\,s\colon U\to\et(\Shv{F})\ \bigm|\ s
+ \text{ непрерывно},\ \pi\circ s=\id_U\,\bigr\}.
+\end{equation}
+Отображения ограничения --- обычные ограничения функций: при
+$V\subset U$ отображение $\Shv{F}^{\#}(U)\to\Shv{F}^{\#}(V)$ ---
+$s\mapsto s|_{V}$.
+\end{defn}
+
+Разберём два условия в~\eqref{eq:Fsharp}:
+\begin{conditions}
+\item $\pi\circ s=\id_U$ означает, что $s(x)$ лежит над $x$, т.\,е.
+ $s(x)\in\Shv{F}_x$: сечение выбирает росток в каждой точке.
+\item Непрерывность означает (по теореме~\ref{thm:open}), что для любого
+ открытого $G\subset\et(\Shv{F})$ множество $\{x\in U: s(x)\in G\}$
+ открыто. Это и есть <<плавность>> выбора.
+\end{conditions}
+
+В обеих записях встречается уточнение <<$\pi\circ s=\id_U$», а не
+<<$(\pi\circ s)(U)=\id_U$»: имеется в виду тождественность как
+отображений, т.\,е. равенство в каждой точке.
+
+\begin{rem}[сравнение с $\Shv{F}(U)$]
+Для предпучка определено каноническое отображение
+\begin{equation}\label{eq:i}
+ i\colon\Shv{F}(U)\longrightarrow\Shv{F}^{\#}(U),\qquad
+ i(s)=\tilde s,\quad \tilde s(x)=s_x.
+\end{equation}
+Предпучок <<теряет>> часть сечений (отождествляет те, что локально
+совпадают), а пучок <<добавляет>> (склеивает согласованные локальные
+наборы). Между этим и стоит весь разговор о прокачивании.
+\end{rem}
+
+\begin{bookbox}
+\booksrc{Годеман, Замечание 1.2.3, с.~133: каждый предпучок
+ $\Shv{F}$ канонически определяет пучок $\tilde{\Shv{F}}$,
+ \emph{порождённый предпучком $\Shv{F}$}, и канонический гомоморфизм
+ предпучков $\Shv{F}\to\tilde{\Shv{F}}$ --- это и есть наше
+ $i\colon\Shv{F}\to\Shv{F}^{\#}$. Годеман, гл.~II, \S\,1, п.~1.4,
+ с.~134: <<простые пучки>> --- частный случай описанной конструкции.
+}
+\end{bookbox}
+
+%==================================================================
+\section{Проверка аксиом (F1) и (F2) для $\Shv{F}^{\#}$}\label{sec:axioms}
+%==================================================================
+
+Пока не доказано, что $\Shv{F}^{\#}$ --- пучок, все рассуждения о нём
+--- лишь предположение. Проверим аксиомы.
+
+\begin{rem}[алгебраическая структура]
+На $\Shv{F}^{\#}(U)$ вводится поэлементная абелева структура (если
+$\Shv{F}$ --- предпучок групп):
+\[
+ (s_1+s_2)(x)=s_1(x)+s_2(x),\qquad
+ 0(x)=0_{\Shv{F}_x}.
+\]
+Нулевой элемент --- непрерывное сечение, постоянно равное нулевому
+ростку; оно непрерывно, потому что прообраз любого открытого ---
+либо $\varnothing$, либо всё $U$. Остаётся проверить (F1) и (F2).
+\end{rem}
+
+\subsection{Аксиома (F1): единственность}
+\textbf{Задача.} $U=\bigcup_i U_i$, $s',s''\in\Shv{F}^{\#}(U)$ и
+$s'|_{U_i}=s''|_{U_i}$ для всех $i$. Доказать $s'=s''$.
+
+\textbf{Доказательство.} Обозначим
+\[
+ E:=\{\,x\in U:\ s'(x)=s''(x)\,\}.
+\]
+Шаг 1: $E$ открыто. Действительно, пусть $s'(x)=s''(x)=\xi$. Поскольку
+$\pi$ --- локальный гомеоморфизм (теорема~\ref{thm:localhomeo}), найдётся
+открытая окрестность $N\ni\xi$ такая, что $\pi|_{N}$ --- гомеоморфизм
+на открытое $V\ni x$. По непрерывности $s'$ и $s''$ множества
+$(s')^{-1}(N)$ и $(s'')^{-1}(N)$ открыты и содержат $x$; их пересечение
+$W$ открыто, и для любого $y\in W$ оба ростка $s'(y),s''(y)$ лежат в
+$N$ и проецируются в $y$. Так как $\pi|_N$ инъективно,
+$s'(y)=s''(y)$. Значит $W\subset E$, т.\,е. $E$ открыт.
+
+Шаг 2: по условию $U_i\subset E$ для каждого $i$, а $U=\bigcup_iU_i$,
+поэтому $U\subset E$, т.\,е. $s'=s''$ на всём $U$.
+
+Заметьте, что <<закрытость $E$» здесь не нужна: достаточно открытости
+$E$ и того, что $U_i\subset E$.
+\hfill$\square$
+
+\subsection{Аксиома (F2): склейка}
+\textbf{Задача.} $U=\bigcup_iU_i$ и даны
+$s_i\in\Shv{F}^{\#}(U_i)$, согласованные:
+$s_i|_{U_i\cap U_j}=s_j|_{U_i\cap U_j}$.
+
+\textbf{Доказательство.} Определим $s\colon U\to\et(\Shv{F})$ по правилу
+$s(x):=s_i(x)$ для любого $i$ с $x\in U_i$.
+\begin{conditions}
+\item \emph{Согласованность выбора}: если $x\in U_i\cap U_j$, то
+ $s_i(x)=s_j(x)$, потому что сечения $s_i$ и $s_j$ совпадают на
+ $U_i\cap U_j$ (это их ограничение одно и то же, а сечение
+ определяется значениями). Значит $s$ --- функция.
+\item \emph{$\pi\circ s=\id$}: выполняется по построению, ведь
+ $s_i(x)\in\Shv{F}_x$.
+\item \emph{Непрерывность}: пусть $G\subset\et(\Shv{F})$ открыто. Тогда
+ \[
+   s^{-1}(G)\cap U_i=s_i^{-1}(G)
+ \]
+ открыто в $U_i$ (непрерывность $s_i$), а $U_i$ открыто в $U$,
+ значит $s^{-1}(G)\cap U_i$ открыто и в $U$. Наконец
+ \[
+   s^{-1}(G)=\bigcup_i\bigl(s^{-1}(G)\cap U_i\bigr)
+ \]
+ --- объединение открытых в $U$, значит открыто.
+\item \emph{Ограничения}: по построению $s|_{U_i}=s_i$.
+\end{conditions}
+Уникальность $s$ тривиальна: сечение определяется своими значениями.
+\hfill$\square$
+
+Итак, $\Shv{F}^{\#}$ --- действительно пучок (и пучок абелевых групп,
+если $\Shv{F}$ --- предпучок групп).
+
+\begin{risunok}{Проверка аксиом для $\Shv{F}^{\#}$: слева --- (F1)
+ (равны на каждом $U_i$ $\Rightarrow$ равны), справа --- (F2)
+ (согласованные $s_1,s_2$ склеиваются в $s$). \label{fig:axioms}}
+\resizebox{\linewidth}{!}{\begin{tikzpicture}[>=Stealth,font=\small]
+  % левая панель: (F1)
+  \begin{scope}
+    \draw[fig base] (0,0) ellipse (1.9 and 0.6);
+    \begin{scope}
+      \clip (0,0) ellipse (1.9 and 0.6);
+      \fill[primary!10] (-0.7,0) ellipse (1.35 and 0.55);
+      \fill[success!10] (0.7,0) ellipse (1.35 and 0.55);
+    \end{scope}
+    \draw[fig open] (-0.7,0) ellipse (1.35 and 0.55);
+    \draw[fig open2] (0.7,0) ellipse (1.35 and 0.55);
+    \node[primary] at (-1.7,0.8) {$U_1$};
+    \node[success] at (1.7,0.8) {$U_2$};
+    \draw[fig fiber] (-1.0,0.51) -- (-1.0,2.35);
+    \draw[fig fiber] ( 1.0,0.51) -- ( 1.0,2.35);
+    \fill (-1.0,1.75) circle (2.6pt);
+    \fill ( 1.0,1.95) circle (2.6pt);
+    \draw[fig sect,smooth] plot coordinates
+      {(-2.1,1.4) (-1.0,1.75) (0,1.5) (1.0,1.95) (2.1,1.7)};
+    \draw[danger,line width=1pt,dashed,smooth] plot coordinates
+      {(-2.1,1.75) (-1.0,1.75) (0,2.05) (1.0,1.95) (2.1,2.15)};
+    \node[danger] at (-2.45,1.2) {$s'$};
+    \node[danger,font=\small] at (2.45,2.3) {$s''$};
+    \node[font=\footnotesize] at (0,-1.05)
+      {(F1): равны на каждом $U_i$ $\Rightarrow$ равны};
+  \end{scope}
+  % правая панель: (F2)
+  \begin{scope}[xshift=6.6cm]
+    \draw[fig base] (0,0) ellipse (2.4 and 0.7);
+    \begin{scope}
+      \clip (0,0) ellipse (2.4 and 0.7);
+      \fill[primary!10] (-0.85,0) ellipse (1.55 and 0.65);
+      \fill[success!10] (0.85,0) ellipse (1.55 and 0.65);
+    \end{scope}
+    \draw[fig open] (-0.85,0) ellipse (1.55 and 0.65);
+    \draw[fig open2] (0.85,0) ellipse (1.55 and 0.65);
+    \node[primary] at (-2.2,0.85) {$U_1$};
+    \node[success] at (2.2,0.85) {$U_2$};
+    \draw[fig fiber] (-1.8,0.463) -- (-1.8,2.65);
+    \draw[fig fiber] ( 0,0.7)     -- ( 0,2.65);
+    \draw[fig fiber] ( 1.8,0.463) -- ( 1.8,2.65);
+    \fill (-1.8,1.45) circle (2.6pt);
+    \fill ( 0,2.15)   circle (2.6pt);
+    \fill ( 1.8,1.65) circle (2.6pt);
+    \draw[fig leafA,smooth] plot coordinates
+      {(-2.4,1.3) (-1.8,1.45) (-0.9,1.85) (0,2.15)};
+    \draw[fig leafB,smooth] plot coordinates
+      {(0,2.15) (0.9,2.0) (1.8,1.65) (2.4,1.5)};
+    \node[primary] at (-1.3,1.22) {$s_1$};
+    \node[success] at (1.25,1.28) {$s_2$};
+    \node[danger] at (0.42,2.52) {$s$};
+    \node[font=\footnotesize] at (0,-1.15)
+      {(F2): $s_1,s_2$ согласованы $\Rightarrow$ есть $s$};
+  \end{scope}
+\end{tikzpicture}}
+\end{risunok}
+
+Пояснение к рисунку~\ref{fig:axioms}. Слева --- аксиома (F1):
+две кривые $s'$ (сплошная) и $s''$ (пунктирная) заранее разные,
+но над каждым $U_i$ их значения совпадают --- это и есть общие
+точки на волокнах; (F1) утверждает, что тогда $s'=s''$
+отождествляются полностью. Справа --- аксиома (F2): локальные
+сечения $s_1$ (синее, над $U_1$) и $s_2$ (зелёное, над $U_2$)
+согласованы в общей части $U_1\cap U_2$ --- обе кривые проходят
+через одну и ту же точку на общем волокне, --- и их склейка
+даёт глобальное сечение $s$.
+
+\sectionsrc{photo\_2 (стр.~10): <<внезапная вставка с F1 и F2
+ для $\et(\Shv{F})$» --- с рисунками, на которых листы $\Shv{F}^{\#}$
+ над покрытием $U=U_i\cup U_j$ показаны <<зелёными и красными»;
+ отмечено, что мало проверить равенство образов, надо именно равенство
+ сечений.}
+
+\begin{bookbox}
+\booksrc{Годеман, п.~3.9, с.~183---184: каноническое отображение
+ $\Shv{F}(X)\to\Shv{F}^{\#}(X)$ инъективно, каково бы ни было
+ $\Shv{F}$, если выполняется (F1); если для $\Shv{F}$ выполнена (F2)
+ и $X$ паракомпактно, то это отображение --- на всё множество.
+ Общая идея: в $\Shv{F}(X)$ <<локально равные» сечения отождествляются,
+ а в $\Shv{F}^{\#}(X)$ <<добавляются» сечения, склеенные из
+ согласованных локальных наборов.
+}
+\end{bookbox}
+
+%==================================================================
+\section{Пример: постоянный предпучок}\label{sec:const}
+%==================================================================
+
+\begin{exm}[простой пучок]\label{exm:const}
+Пусть $A$ --- абелева группа, а предпучок $\Shv{F}$ определён формулой
+$\Shv{F}(U)=A$ для всех непустых открытых $U$ (и
+$\Shv{F}(\varnothing)=0$), все ограничения $\rho$ --- тождественные.
+Тогда:
+\begin{bullets}
+\item $\Shv{F}_x=A$ для всякой $x$ (предел по окрестностям ничего не
+ меняет, ведь все $\rho$ --- тождества), поэтому
+ $\et(\Shv{F})=X\times A$, и $\pi\colon X\times A\to X$ --- обычная
+ проекция;
+\item топология на $X\times A$ --- произведение топологии $X$ и
+  дискретной топологии на $A$ (это как раз наиболее тонкая топология,
+ при которой все <<константные>> сечения непрерывны);
+\item $\Shv{F}^{\#}(U)$ --- непрерывные отображения $U\to A$, т.\,е.
+ \emph{локально постоянные} функции, а на связном $U$ --- просто
+ константы.
+\end{bullets}
+Проверка (F1) для этого примера --- обычное утверждение из топологии:
+локально постоянные функции на связном множестве постоянны, а на
+произвольном --- определяются значениями на связных компонентах.
+\end{exm}
+
+\begin{risunok}{Постоянный предпучок: $\et(\Shv{F})=X\times A$ с
+ дискретным $A$; сечение --- локально постоянная функция $U\to A$.
+  \label{fig:const}}
+\begin{tikzpicture}[>=Stealth,font=\small]
+  % база X
+  \draw[fig base] (0,0) ellipse (3.2 and 0.7);
+  \node[below] at (0,-0.85) {$X$};
+  % уровни {x} x {a}
+  \foreach \y in {1.5,2.5,3.5} \draw[fig fiber] (-3.2,\y) -- (3.2,\y);
+  \foreach \y/\a in {1.5/{a_1},2.5/{a_2},3.5/{a_3}} {
+    \node[anchor=east,font=\footnotesize] at (-3.35,\y)
+      {$\{x\}\times\{\a\}$};
+    \foreach \x in {-2.6,-1.6,-0.6,0.4,1.4,2.4}
+      \fill (\x,\y) circle (2.2pt);
+  }
+  % волокна
+  \foreach \x/\top in {-2.6/0.408,-1.6/0.606,-0.6/0.687,
+                       0.4/0.694,1.4/0.629,2.4/0.463}
+    \draw[fig fiber] (\x,\top) -- (\x,3.5);
+  % открытые U_1, U_2
+  \begin{scope}
+    \clip (0,0) ellipse (3.2 and 0.7);
+    \fill[primary!10] (-2.1,0) ellipse (1.45 and 0.65);
+    \fill[success!10] (1.5,0) ellipse (1.45 and 0.65);
+  \end{scope}
+  \draw[fig open] (-2.1,0) ellipse (1.45 and 0.65);
+  \draw[fig open2] (1.5,0) ellipse (1.45 and 0.65);
+  \node[primary] at (-2.1,-1.1) {$U_1$};
+  \node[success] at (1.5,-1.1) {$U_2$};
+  % локально постоянные сечения
+  \draw[fig sect] (-3.15,2.5) -- (-0.7,2.5);
+  \draw[fig sect] (0.1,1.5) -- (2.9,1.5);
+  \node[danger] at (-1.9,2.68) {$a_2$};
+  \node[danger] at (1.5,1.68) {$a_1$};
+  % проекция
+  \draw[->,thick] (3.75,3.5) -- (3.75,0.5);
+  \node at (3.95,2.0) {$\pi$};
+  \node[anchor=south east] at (-3.3,3.85) {$X\times A=\et(\Shv{F})$};
+\end{tikzpicture}
+\end{risunok}
+
+Пояснение к рисунку~\ref{fig:const}. Овал внизу --- база $X$;
+всё вместе --- $\et(\Shv{F})=X\times A$, где $A$ дискретно,
+поэтому <<этажёрка>> состоит из отдельных горизонтальных
+рядов точек:
+горизонтальные пунктирные линии --- уровни $\{x\}\times\{a\}$
+для трёх значений $a_1,a_2,a_3$. Синее и зелёное --- открытые
+$U_1,U_2\subset X$. Красные отрезки --- сечение: над $U_1$ оно
+постоянно равно $a_2$ (лежит на одном уровне), над $U_2$ ---
+равно $a_1$: именно локально постоянная функция $U\to A$.
+Стрелка $\pi$ --- проекция на базу.
+
+\begin{bookbox}
+\booksrc{Годеман, гл.~II, \S\,1, п.~1.4 <<Простые пучки>>, с.~134:
+ простой пучок с базой $X$ и слоем $A$ --- пучок, порождённый предпучком
+ $U\mapsto A$ с тождественными ограничениями;
+ $\et=X\times A$ --- произведение топологии $X$ и дискретной топологии
+ на $A$; сечения над $U$ канонически отождествляются с локально
+ постоянными отображениями $U\to A$.
+}
+\end{bookbox}
+
+%==================================================================
+\section[Основное утверждение: $\Hom(\Shv{F},\Shv{G})\simeq\Hom(\Shv{F}^{\#},\Shv{G})$]
+ {Основное утверждение: $\Hom(\Shv{F},\Shv{G})\simeq
+  \Hom(\Shv{F}^{\#},\Shv{G})$}
+%==================================================================
+
+\begin{thm}[главное утверждение лекции]\label{thm:hom}
+Пусть $\Shv{F}$ --- предпучок на $X$, а $\Shv{G}$ --- \emph{пучок} на
+$X$. Тогда отображение
+\begin{equation}\label{eq:Phi}
+ \Phi\colon\Hom(\Shv{F}^{\#},\Shv{G})\longrightarrow
+ \Hom(\Shv{F},\Shv{G}),\qquad \varphi\longmapsto\varphi\circ i,
+\end{equation}
+где $i\colon\Shv{F}\to\Shv{F}^{\#}$ --- каноническое, является
+изоморфизмом. Более того, изоморфизм естествен: коммутативны
+квадраты диаграмм~\ref{dgm:natG} и~\ref{dgm:natF}.
+\end{thm}
+
+Заметим направление: изоморфизм идёт \emph{из} морфизмов в пучок
+$\Shv{F}^{\#}$ \emph{в} морфизмы в произвольный предпучок. Гомоморфизм
+пучка определяется своими значениями на сечениях, а сечений
+$\Shv{F}^{\#}(U)$ <<достаточно много>>: именно это и доказывается.
+
+\subsection{Шаг 1: инъективность $\Phi$}
+Для $\varphi\colon\Shv{F}^{\#}\to\Shv{G}$ положим
+$\varphi':=\varphi\circ i\colon\Shv{F}\to\Shv{G}$ --- диаграмма
+\ref{dgm:univ}.
+
+\begin{diagram}{Диаграмма универсальности: $\varphi'=\varphi\circ i$
+ --- сжатие $\varphi$ по каноническому $i$.\label{dgm:univ}}
+\begin{tikzcd}[cd style,column sep=huge,row sep=huge]
+ \Shv{F} \ar[r,"i"] \ar[dr,"\varphi'"'] & \Shv{F}^{\#} \ar[d,"\varphi"'] \\
+ & \Shv{G}
+\end{tikzcd}
+\end{diagram}
+
+Пояснение к диаграмме~\ref{dgm:univ}. Треугольник читается как
+<<сначала сжать по $i$, затем применить $\varphi$>>: диагональ
+$\varphi'=\varphi\circ i$ --- это и есть $\Phi(\varphi)$, переход
+морфизма пучка в морфизм предпучков. Коммутативность треугольника
+--- просто определение $\varphi'$; всё содержание утверждения
+в том, что $\varphi'$ корректно определён и что из
+$\varphi\circ i=\psi\circ i$ следует $\varphi=\psi$ ---
+доказывается сразу ниже.
+
+Если $\varphi\circ i=\psi\circ i$, то $\varphi=\psi$: действительное
+значение $\varphi$ на произвольном сечении $\tilde s\in\Shv{F}^{\#}(U)$
+уже определено, потому что $\tilde s$ локально является образом
+некоторого $s\in\Shv{F}(V)$, а $\varphi$ --- гомоморфизм \emph{пучка}
+$\Shv{G}$, поэтому его поведение локально, а значит и везде,
+определяется значениями $i(s)$. Разделение точек $\Phi(\varphi)$ ---
+это инъективность.
+
+\subsection{Шаг 2: сюръективность $\Phi$}
+\subsubsection*{Построение $\beta$}
+
+Пусть дан $\alpha\colon\Shv{F}\to\Shv{G}$ --- гомоморфизм предпучков.
+Надо построить $\beta\colon\Shv{F}^{\#}\to\Shv{G}$ с
+$\beta\circ i=\alpha$.
+
+Начнём с <<наивной>> формулы. Для $U\subset X$ и
+$s\in\Shv{F}(U)$ положим
+\begin{equation}\label{eq:beta-naive}
+ \beta\bigl(i(s)\bigr):=\alpha_U(s)\in\Shv{G}(U).
+\end{equation}
+Это хорошо согласуется с ограничениями, потому что $\alpha$ ---
+гомоморфизм предпучков: $\beta(i(s))|_{V}=\alpha_V(s|_V)$.
+
+\subsubsection*{Проблема единственности}
+
+Возникает вопрос: а что, если $s_1\neq s_2$, но $i(s_1)=i(s_2)$? Тогда
+по~\eqref{eq:beta-naive} у $\beta$ получится два разных значения
+$g_1=\alpha(s_1)$ и $g_2=\alpha(s_2)$, и отображение не будет
+определено. Схема на листе~11: $s_1\to\tilde s\leftarrow s_2$.
+Покажем, что в таком случае $g_1=g_2$.
+
+\begin{lem}[локальное равенство]\label{lem:local}
+Пусть $s,t\in\Shv{F}(U)$ и $i(s)=i(t)$ в $\Shv{F}^{\#}(U)$. Тогда
+$\alpha_U(s)=\alpha_U(t)$ в $\Shv{G}(U)$.
+\end{lem}
+
+\begin{proof}
+По условию ростки совпадают: $s_x=t_x$ для всех $x\in U$. По
+определению прямого предела~\eqref{eq:stalk} это означает: для каждого
+$x\in U$ существует открытая окрестность $V_x\subset U$ такая, что
+\begin{equation}\label{eq:same}
+ \res^{V_x}_{U}(s)=\res^{V_x}_{U}(t),
+ \qquad\text{т.\,е.}\qquad s|_{V_x}=t|_{V_x}.
+\end{equation}
+Семейство $\{V_x\}_{x\in U}$ покрывает $U$. Применив к~\eqref{eq:same}
+гомоморфизм предпучка $\alpha$ (точнее, его компоненту на $V_x$), получим
+\[
+ \alpha_{V_x}\bigl(s|_{V_x}\bigr)=\alpha_{V_x}\bigl(t|_{V_x}\bigr),
+\]
+потому что $\alpha$ переводит равные элементы в равные. С другой
+стороны, коммутативность диаграммы ограничений для $\alpha$
+(диаграмма~\ref{dgm:natur}) даёт
+\[
+ \alpha_{V_x}\bigl(s|_{V_x}\bigr)=\bigl(\alpha_U(s)\bigr)|_{V_x},
+ \qquad
+ \alpha_{V_x}\bigl(t|_{V_x}\bigr)=\bigl(\alpha_U(t)\bigr)|_{V_x}.
+\]
+Значит $\alpha_U(s)$ и $\alpha_U(t)$ совпадают на каждом $V_x$:
+$\bigl(\alpha_U(s)\bigr)|_{V_x}=\bigl(\alpha_U(t)\bigr)|_{V_x}$.
+Осталось применить аксиому \emph{(F1) пучка $\Shv{G}$} к покрытию
+$U=\bigcup_xV_x$: два глобальных сечения, совпадающие на каждом куске
+покрытия, равны. Итак, $\alpha_U(s)=\alpha_U(t)$.
+\end{proof}
+
+\begin{diagram}{Натурность гомоморфизма $\alpha\colon\Shv{F}\to\Shv{G}$:
+ квадраты коммутативны для любой пары $W\subset W'$, в частности для
+ $V_x\subset U$. Слева направо --- ограничения, сверху вниз ---
+ компоненты $\alpha$.\label{dgm:natur}}
+\begin{tikzcd}[cd style]
+ \Shv{F}(U) \ar[r,"\res^{V_x}_{U}"] \ar[d,"\alpha_U"'] &
+ \Shv{F}(V_x) \ar[d,"\alpha_{V_x}"] \\
+ \Shv{G}(U) \ar[r,"\res^{V_x}_{U}"'] & \Shv{G}(V_x)
+\end{tikzcd}
+\end{diagram}
+
+Пояснение к диаграмме~\ref{dgm:natur}. Это квадрат натуральности
+гомоморфизма предпучков $\alpha$: два маршрута из $\Shv{F}(U)$
+в $\Shv{G}(V_x)$ --- «сначала ограничить, потом применить
+$\alpha$» (вверх-вправо-вниз) и «сначала применить $\alpha$ на
+$U$, потом ограничить» (влево-вниз-направо) --- дают одно и то
+же. Это ровно условие $\alpha_U(s)|_{V_x}=\alpha_{V_x}(s|_{V_x})$;
+в доказательстве квадрат применяется к паре $V_x\subset U$.
+
+Лемма~\ref{lem:local} означает: формула~\eqref{eq:beta-naive} не зависит
+от того, каким из $s$ с $\tilde s=i(s)$ мы воспользуемся.
+
+\subsubsection*{Определение $\beta$ на произвольном сечении}
+
+Теперь возьмём произвольное $\tilde s\in\Shv{F}^{\#}(U)$, а не только
+вида $i(s)$. Почему оно локально такого вида? Потому что непрерывность:
+для точки $x\in U$ росток $\tilde s(x)\in\Shv{F}_x$ --- это класс
+некоторой пары $(V,s)$, $s\in\Shv{F}(V)$; множество точек, в которых
+$\tilde s$ совпадает с $i(s)$, открыто (см.~шаг~1 доказательства
+(F1) в \S\,\ref{sec:axioms}---там показано, что множество точек
+совпадения двух непрерывных сечений открыто). Эти открытые множества
+покрывают $U$, значит $U=\bigcup_\alpha W_\alpha$ и
+$\tilde s|_{W_\alpha}=i(s_\alpha)$ для некоторых
+$s_\alpha\in\Shv{F}(W_\alpha)$.
+
+Положим
+\[
+ t_\alpha:=\alpha_{W_\alpha}(s_\alpha)\in\Shv{G}(W_\alpha).
+\]
+На пересечении $W_\alpha\cap W_\beta$ выполняется
+$i(s_\alpha)|=i(s_\beta)|$, т.\,е. локальное равенство сечений
+$\Shv{F}$; по лемме~\ref{lem:local} (вернее, по её локальной версии)
+$\alpha(s_\alpha)$ и $\alpha(s_\beta)$ совпадают на
+$W_\alpha\cap W_\beta$. Итак, семейство $(t_\alpha)$ --- согласованное,
+и аксиома \emph{(F2) пучка $\Shv{G}$} даёт единственное
+$t\in\Shv{G}(U)$ с $t|_{W_\alpha}=t_\alpha$. Полагаем
+\begin{equation}\label{eq:beta}
+ \beta(\tilde s):=t.
+\end{equation}
+
+Независимость от выбора покрытия: если есть другое покрытие
+$U=\bigcup_\beta W'_\beta$, то на пересечениях $W_\alpha\cap W'_\beta$
+оба определения совпадают (там $\tilde s$ --- образ одного и того же
+сечения), и снова применяется (F2), либо (F1) --- глобальное сечение
+$\Shv{G}(U)$ определяется по значениям на покрытии однозначно.
+
+Итого: $\beta\colon\Shv{F}^{\#}\to\Shv{G}$ --- гомоморфизм пучков,
+и $\beta\circ i=\alpha$ по построению~\eqref{eq:beta}. Значит
+$\Phi(\beta)=\alpha$, т.\,е. $\Phi$ --- сюръективно.
+
+\subsubsection*{Схема склейки}
+
+Глобальное сечение $t$ из~\eqref{eq:beta} собирается из локальных
+$t_\alpha$ ровно так, как показано на диаграмме~\ref{dgm:glue}: значения
+на $W_\alpha$ и $W_\beta$ дают одно и то же на пересечении, и (F2)
+<<склеивает>> их в $t\in\Shv{G}(U)$.
+
+\begin{diagram}{Склейка: из локальных сечений $t_x\in\Shv{G}(V_x)$,
+ согласованных на $V_x\cap V_y$, аксиома (F2) пучка $\Shv{G}$ даёт
+ единственное $t\in\Shv{G}(U)$.\label{dgm:glue}}
+\begin{tikzcd}[cd style]
+ & \Shv{G}(U) \ar[dl,"\res^{V_x}_{U}"'] \ar[dr,"\res^{V_y}_{U}"] & \\
+ \Shv{G}(V_x) \ar[dr,"\res"'] & & \Shv{G}(V_y) \ar[dl,"\res"] \\
+  & \Shv{G}(V_x\cap V_y) &
+\end{tikzcd}
+\end{diagram}
+
+Пояснение к диаграмме~\ref{dgm:glue}. Ромб показывает действие
+аксиомы (F2) в обе стороны. Вниз: глобальное сечение
+$t\in\Shv{G}(U)$ ограничивается до $V_x$ и $V_y$, и оба
+полученных локальных значения совпадают на пересечении
+$V_x\cap V_y$ (две нижние стрелки сходятся к одному элементу).
+Вверх --- сама склейка: если заданы согласованные локальные
+значения $t_x$ и $t_y$, то (F2) даёт единственное
+$t\in\Shv{G}(U)$, из которого они получаются ограничением.
+
+\sectionsrc{photo\_3---photo\_4 (стр.~11---12):
+ проблема $s_1\neq s_2$, $i(s_1)=i(s_2)$; выбор $V_x$ <<по определению
+ прямого предела>>; натурная диаграмма; вывод
+ <<$\forall x,y\in U\ \exists V_x,V_y$ и $g_x\in\Shv{G}(V_x)$,
+ $g_y\in\Shv{G}(V_y)$ с $g_x|_{V_x\cap V_y}=g_y|_{V_x\cap V_y}$;
+ применяем (F2) к пучку $\Shv{G}$ и получаем
+ $g\in\Shv{G}(U)$, определённый однозначно $\Rightarrow$ отображение
+ $\beta$ задано корректно».}
+
+\subsection{Шаг 3: естественность}
+Для гомоморфизма пучков $f\colon\Shv{G}_1\to\Shv{G}_2$ и для
+гомоморфизма предпучков $g\colon\Shv{F}_1\to\Shv{F}_2$ коммутативны
+квадраты диаграмм~\ref{dgm:natG} и~\ref{dgm:natF}.
+
+\begin{diagram}{Естественность $\Phi$ по $\Shv{G}$: сжатие по $i$
+ совместно с композицией с $f$.\label{dgm:natG}}
+\begin{tikzcd}[cd style]
+ \Hom(\Shv{F},\Shv{G}_1) \ar[r,"f\circ-"] \ar[d,"\Phi"'] &
+ \Hom(\Shv{F},\Shv{G}_2) \ar[d,"\Phi"] \\
+ \Hom(\Shv{F}^{\#},\Shv{G}_1) \ar[r,"f\circ-"'] &
+ \Hom(\Shv{F}^{\#},\Shv{G}_2)
+\end{tikzcd}
+\end{diagram}
+
+Пояснение к диаграмме~\ref{dgm:natG}. Квадрат естественности
+$\Phi$ по пучку: верхняя стрелка --- домножение морфизма
+предпучков на $f\colon\Shv{G}_1\to\Shv{G}_2$, нижняя --- то же
+для морфизмов в $\Shv{G}_2$, вертикали --- <<сжатие>> $\Phi$
+по каноническому $i$. Коммутативность означает:
+$f\circ(\varphi\circ i)=(f\circ\varphi)\circ i$, т.\,е.\ неважно,
+сжимать до или после домножения на $f$.
+
+\begin{diagram}{Естественность $\Phi$ по $\Shv{F}$: сжатие по $i_2$
+ совместно с композиции с $g$.\label{dgm:natF}}
+\begin{tikzcd}[cd style]
+ \Hom(\Shv{F}_1,\Shv{G}) \ar[r,"-\circ i_2"] \ar[d,"\Phi"'] &
+ \Hom(\Shv{F}_2,\Shv{G}) \ar[d,"\Phi"] \\
+ \Hom(\Shv{F}_1^{\#},\Shv{G}) \ar[r,"-\circ i_2"'] &
+ \Hom(\Shv{F}_2^{\#},\Shv{G})
+\end{tikzcd}
+\end{diagram}
+
+Пояснение к диаграмме~\ref{dgm:natF}. Зеркальная ситуация:
+стрелки $-\circ i_2$ домножают морфизм предпучков
+$g\colon\Shv{F}_1\to\Shv{F}_2$, вертикали --- снова $\Phi$.
+Коммутативность --- это $(\varphi\circ g)\circ i_1
+=(\varphi\circ i_2)\circ g$: сжимать сначала $g$, потом $\varphi$,
+или наоборот, --- одинаково. Вместе две диаграммы
+(\ref{dgm:natG} и \ref{dgm:natF}) и означают, что изоморфизм
+$\Phi$ естественен по обоим аргументам.
+
+Здесь $i_2\colon\Shv{F}_2\to\Shv{F}_2^{\#}$ --- каноническое
+отображение, а стрелки $-\circ i_2$ индуцированы гомоморфизмом
+предпучков $g$. Проверка прямая: $\Phi(f\circ\varphi)=
+f\circ\varphi\circ i=f\circ\Phi(\varphi)$ и
+$\Phi(\varphi\circ g)=(\varphi\circ g)\circ i_1=(\varphi\circ i_2)\circ
+g=\Phi(\varphi)\circ g$.
+
+\begin{rem}[что это значит категорно]
+Если задан функтор $\PSh(X)\to\Sh(X)$, отсылающий предпучок к пучку,
+порождённому им, то изоморфизм теоремы~\ref{thm:hom} ---
+это \emph{свойство универсальности} этого функтора: включение
+$\Sh(X)\hookrightarrow\PSh(X)$ имеет левый сопряжённый
+$\Shv{F}\mapsto\Shv{F}^{\#}$. Коммутативность диаграмм
+\ref{dgm:natG}, \ref{dgm:natF} --- naturality этого построения;
+именно она позволяет говорить, что <<прокачивание>> задано
+\emph{функторно}, а не произвольным выбором.
+\end{rem}
+
+\begin{bookbox}
+\booksrc{Годеман, гл.~I, п.~1.7, с.~24---25: категории, ковариантные и
+ контравариантные функторы, естественное преобразование (система
+ $T(X)$, которая делает диаграмму с $F(f),G(f)$ коммутативной); пример:
+ морфизм $t\colon A\to B$ индуцирует морфизм функторов
+ $\Hom(B,X)\to\Hom(A,X)$ передачей $u\mapsto u\circ t$.
+ Годеман, гл.~I, п.~1.9, с.~30---31: предпучок --- контравариантный
+ функтор категории открытых множеств; категория предпучков абелевых
+ групп --- абелева категория, функтор $\Shv{F}\mapsto\Shv{F}(U)$ точен,
+ поэтому точность последовательности предпучков эквивалентна
+ поэлементной точности.
+\par\smallskip
+ Манин, \S\,1.16.5---1.16.6, с.~103: предпучок как контравариантный
+ функтор $\mathrm{Top}_E\to\mathrm{Sets}$; определение функторного
+ морфизма с коммутативной диаграммой; категория
+ $\mathrm{Funct}(C,D)$.
+}
+\end{bookbox}
+
+%==================================================================
+\section{<<Факт>> о функторах $\Hom$ и характеризация пучка}
+%==================================================================
+
+\subsection{Факт}
+\leavevmode\par
+\begin{fact}[Факт из лекции]\label{fact:hom}
+Пусть $\mathcal{C}$ --- маленькая категория,
+$A_1,A_2\in\mathrm{Ob}\,\mathcal{C}$,
+$F_1=\Hom(A_1,-)$, $F_2=\Hom(A_2,-)$ --- функторы
+$\mathcal{C}\to\mathrm{Sets}$. Если существует натуральное
+преобразование $\eta\colon F_1\Rightarrow F_2$ такое, что каждая его
+компонент $\eta_X\colon\Hom(A_1,X)\to\Hom(A_2,X)$ является биекцией, то
+$A_1\simeq A_2$.
+\end{fact}
+
+Иными словами: функтор $\Hom(A,-)$ определяет объект категории
+\emph{однозначно}. Интуиция: $A$ --- это <<тот объект, через который
+удобно смотреть на все остальные>>, и если два объекта дают одинаковые
+<<окна>>, они изоморфны.
+
+\subsection{Доказательство}
+\textbf{Шаг 1: достаём $f$ и $g$.}
+Рассмотрим компоненту $\eta_{A_1}\colon\Hom(A_1,A_1)\to\Hom(A_2,A_1)$;
+она переводит $\id_{A_1}$ в некоторый морфизм
+\[
+ f\colon A_2\longrightarrow A_1.
+\]
+Компонента $\eta_{A_2}\colon\Hom(A_1,A_2)\to\Hom(A_2,A_2)$ --- биекция,
+поэтому можно рассмотреть обратную $\eta_{A_2}^{-1}$; она переводит
+$\id_{A_2}$ в морфизм
+\[
+ g\colon A_1\longrightarrow A_2.
+\]
+
+\textbf{Шаг 2: докажем $g\circ f=\id_{A_2}$.}
+Натуральность $\eta$ для морфизма $g\colon A_1\to A_2$ --- это
+коммутативность диаграммы~\ref{dgm:fact1}.
+
+\begin{diagram}{Натуральность $\eta$ для $g\colon A_1\to A_2$: стрелки
+ $-\circ g$ --- композиция с $g$.\label{dgm:fact1}}
+\begin{tikzcd}[cd style]
+ \Hom(A_1,A_1) \ar[r,"\eta_{A_1}"] \ar[d,"g\circ-"'] &
+ \Hom(A_2,A_1) \ar[d,"g\circ-"] \\
+ \Hom(A_1,A_2) \ar[r,"\eta_{A_2}"'] & \Hom(A_2,A_2)
+\end{tikzcd}
+\end{diagram}
+
+Пояснение к диаграмме~\ref{dgm:fact1}. Это условие натуральности
+преобразования $\eta$ при морфизме $g$: маршрут <<сначала
+$\eta_{A_1}$, потом скомпоновать с $g$>> (вправо-вниз) равен
+маршруту <<сначала скомпоновать с $g$, потом $\eta_{A_2}$>>
+(влево-вниз-вправо). Ниже оба маршрута прослеживаются на
+элементе $\id_{A_1}$, и равенство даёт $g\circ f=\id_{A_2}$.
+
+Проследим, куда попадает $\id_{A_1}$ по двум маршрутам:
+\begin{bullets}
+\item сверху направо: $\id_{A_1}\mapsto\eta_{A_1}(\id_{A_1})=f$, затем
+ вниз: $f\mapsto g\circ f$;
+\item слева вниз, затем направо: $\id_{A_1}\mapsto g$, затем
+ $g\mapsto\eta_{A_2}(g)$.
+\end{bullets}
+Коммутативность даёт $\eta_{A_2}(g)=g\circ f$. С другой стороны, по
+построению $g$ мы имели $\eta_{A_2}^{-1}(\id_{A_2})=g$, т.\,е.
+$\eta_{A_2}(g)=\id_{A_2}$. Значит
+\begin{equation}\label{eq:gf}
+ g\circ f=\id_{A_2}.
+\end{equation}
+
+\textbf{Шаг 3: строим обратное преобразование $\eta^{-1}$.}
+Положим $(\eta^{-1})_X:=\eta_X^{-1}$, т.\,е.
+$\Hom(A_2,X)\to\Hom(A_1,X)$. Надо проверить натуральность: для любого
+морфизма $\alpha\colon X\to Y$ диаграмма~\ref{dgm:fact2} должна быть
+коммутативной.
+
+\begin{diagram}{Натуральность обратного преобразования: компоненты
+ $\eta_X^{-1}$ и композиции с $\alpha$.\label{dgm:fact2}}
+\begin{tikzcd}[cd style]
+ \Hom(A_2,X) \ar[r,"\alpha\circ-"] \ar[d,"\eta_X^{-1}"'] &
+ \Hom(A_2,Y) \ar[d,"\eta_Y^{-1}"] \\
+ \Hom(A_1,X) \ar[r,"\alpha\circ-"'] & \Hom(A_1,Y)
+\end{tikzcd}
+\end{diagram}
+
+Пояснение к диаграмме~\ref{dgm:fact2}. Условие натуральности
+для обратного преобразования $\eta^{-1}$. Два маршрута из
+$\Hom(A_2,X)$ в $\Hom(A_1,Y)$: вправо-вниз --- «сначала
+скомпоновать с $\alpha$, потом применить $\eta^{-1}$» ---
+и вниз-вправо --- «сначала $\eta^{-1}$, потом композиция
+с $\alpha$»; натуральность и есть их равенство. На элементе
+$p$ маршруты прослеживаются ниже.
+
+Проверка: пусть $p\colon A_2\to X$. Поскольку $\eta_X$ --- биекция,
+$p=\eta_X(q)$ для единственного $q\colon A_1\to X$, т.\,е.
+$q=\eta_X^{-1}(p)$. Тогда оба маршрута дают
+$\eta_Y^{-1}(\alpha\circ\eta_X(q))$: слева направо --- по определению,
+справа налево --- $\eta_Y^{-1}(\alpha\circ p)$. Коммутативность
+доказана.
+
+\textbf{Шаг 4: докажем $f\circ g=\id_{A_1}$.}
+Рассмотрим диаграмму~\ref{dgm:fact3}, натуральность $\eta^{-1}$ для
+морфизма $f\colon A_2\to A_1$, и применим её к $\id_{A_2}$.
+
+\begin{diagram}{Натуральность $\eta^{-1}$ для $f\colon A_2\to A_1$
+ (та же диаграмма \ref{dgm:fact2} с частным выбором $X=A_2$, $Y=A_1$;
+ стрелки $f\circ-$).\label{dgm:fact3}}
+\begin{tikzcd}[cd style]
+ \Hom(A_2,A_2) \ar[r,"\eta_{A_2}^{-1}"] \ar[d,"f\circ-"'] &
+ \Hom(A_1,A_2) \ar[d,"f\circ-"] \\
+ \Hom(A_2,A_1) \ar[r,"\eta_{A_1}^{-1}"'] & \Hom(A_1,A_1)
+\end{tikzcd}
+\end{diagram}
+
+Пояснение к диаграмме~\ref{dgm:fact3}. Частный случай
+диаграммы~\ref{dgm:fact2}: naturality $\eta^{-1}$, применённая
+к морфизму $f\colon A_2\to A_1$. Здесь стрелки --- композиция
+с $f$; приложение коммутативности к $\id_{A_2}$ даёт
+$f\circ g=\id_{A_1}$.
+
+Верхний путь: $\id_{A_2}\mapsto\eta_{A_2}^{-1}(\id_{A_2})=g$, затем
+вниз: $g\mapsto f\circ g$. Нижний путь: $\id_{A_2}\mapsto f$, затем
+направо: $f\mapsto\eta_{A_1}^{-1}(f)=\eta_{A_1}^{-1}(\eta_{A_1}(\id_{A_1}))
+=\id_{A_1}$. Значит
+\begin{equation}\label{eq:fg}
+ f\circ g=\id_{A_1}.
+\end{equation}
+
+Из~\eqref{eq:gf} и~\eqref{eq:fg} следует $A_1\simeq A_2$ (изоморфизм
+$f$ с обратным $g$). \hfill$\square$
+
+\subsection{Следствие: как узнать пучок}
+\leavevmode\par
+\begin{cor}\label{cor:criterion}
+Пусть $\Shv{F}$ --- предпучок, $\Shv{F}'$ --- пучок. Если для всех
+пучков $\Shv{G}$ изоморфизм $\Hom(\Shv{F},\Shv{G})\simeq\Hom(\Shv{F}',
+\Shv{G})$ естествен (т.\,е. коммутативны все диаграммы вида
+\ref{dgm:natG} и \ref{dgm:natF}), то $\Shv{F}\simeq\Shv{F}'$ как
+предпучки.
+\end{cor}
+
+\begin{proof}
+Возьмём $\mathcal{C}=\Sh(X)$ и $F_1=\Hom(\Shv{F},-)$,
+$F_2=\Hom(\Shv{F}',-)$ как функторы $\Sh(X)\to\mathrm{Sets}$. Данное
+естественное преобразование удовлетворяет условиям Факта, поэтому
+$\Shv{F}\simeq\Shv{F}'$ в $\mathcal{C}$, т.\,е. как пучки; но $\Shv{F}'$
+--- пучок, значит и $\Shv{F}$ изоморфен пучку.
+\end{proof}
+
+Это следствие и есть <<принцип единственности>>: два способа
+<<прокачать>> предпучок, дающие одинаковые морфизмы во все пучки,
+совпадают. В частности, $\Shv{F}^{\#}$ определён однозначно.
+
+\begin{rem}[лемма Ёнеды]
+Факт~\ref{fact:hom} --- частный случай знаменитого погружения
+категории в категорию представимых функторов (лемма Ёнеды).
+\end{rem}
+
+\begin{bookbox}
+\booksrc{Манин, \S\,1.16.8---1.16.9, с.~104---105: представимые
+ функторы $h_X=\Hom(X,-)$ и теорема $f\mapsto h_f$ --- изоморфизм
+ $\Hom_{\mathcal C}(X,Y)\simeq\Hom_{\mathrm{Funct}}(h_X,h_Y)$; функтор
+ $h\colon\mathcal C\to\widehat{\mathcal C}$ является погружением
+ категории. Именно это и есть категорная форма <<Факта>>:
+ $\Hom(A,-)$ определяет объект однозначно.
+ Годеман, гл.~I, п.~1.7, с.~25 --- пример того, как морфизмы
+ порождают естественные преобразования функторов $\Hom$.
+}
+\end{bookbox}
+
+%==================================================================
+\section[«Прокачивание» через подпредпучок: секции $\Shv{F}^{+}$]
+ {<<Прокачивание>> через подпредпучок: секции $\Shv{F}^{+}$}
+%==================================================================
+
+Вместо того чтобы каждый раз проверять аксиомы для $\et(\Shv{F})$,
+можно <<прокачать>> предпучок внутри заранее готового пучка.
+
+\begin{ass}
+Пусть $\Shv{H}$ --- пучок на $X$, а $\Shv{F}\subset\Shv{H}$ ---
+подпредпучок: семейства $\Shv{F}(U)\subseteq\Shv{H}(U)$,
+согласованные с ограничениями $\rho$.
+\end{ass}
+
+\begin{defn}[секции $\Shv{F}^{+}$]
+Для открытого $U\subset X$ положим
+\begin{equation}\label{eq:Fplus}
+ \Shv{F}^{+}(U)=\bigl\{\,s\in\Shv{H}(U)\ \bigm|\ \exists\ \text{покрытие }
+ U=\textstyle\bigcup_i U_i\ \text{ и }\ \res^{U_i}_{U}(s)\in\Shv{F}(U_i)
+ \ \forall i\bigr\},
+\end{equation}
+то есть $\Shv{F}^{+}(U)$ --- секции пучка $\Shv{H}$, которые
+\emph{локально} являются секциями предпучка $\Shv{F}$.
+\end{defn}
+
+\begin{thm}\label{thm:Fplus}
+$\Shv{F}^{+}$ --- пучок, и $\Shv{F}^{+}\simeq\Shv{F}^{\#}$.
+\end{thm}
+
+Сразу видно, что $\Shv{F}^{+}$ --- пучок: единственность и склейка
+наследуются от $\Shv{H}$ (покрытие для двух секций можно объединить,
+а для склейки --- взять объединение двух покрытий). Вся работа ---
+в изоморфизме.
+
+\subsection{План доказательства}
+Вместо прямой проверки используется теорема~\ref{thm:hom} и
+Факт~\ref{fact:hom}:
+\begin{conditions}
+\item построить естественный изоморфизм функторов
+ $\Hom(\Shv{F},-)\simeq\Hom(\Shv{F}^{+},-)$ на пучках;
+\item изоморфизм $\Hom(\Shv{F},-)\simeq\Hom(\Shv{F}^{\#},-)$ уже есть
+ (теорема~\ref{thm:hom});
+\item тогда $\Hom(\Shv{F}^{+},-)\simeq\Hom(\Shv{F}^{\#},-)$ естественно
+ (композиция изоморфизмов), и <<Факт>> даёт
+ $\Shv{F}^{+}\simeq\Shv{F}^{\#}$.
+\end{conditions}
+
+\subsection{Построение $\eta_{\Shv{G}}$}
+Для пучка $\Shv{G}$ и $\varphi\colon\Shv{F}\to\Shv{G}$ отображение
+\[
+ \eta_{\Shv{G}}(\varphi)=\bar\varphi\colon\Shv{F}^{+}\to\Shv{G}
+\]
+строится так.
+\begin{conditions}
+\item Пусть $s\in\Shv{F}^{+}(U)$. По определению~\eqref{eq:Fplus} есть
+ покрытие $U=\bigcup_iU_i$ и $s_i:=\res^{U_i}_{U}(s)\in\Shv{F}(U_i)$.
+\item Положим $t_i:=\varphi_{U_i}(s_i)\in\Shv{G}(U_i)$.
+\item Семейство $(t_i)$ согласовано: на $U_i\cap U_j$ равенство
+ $s_i|=s_j|$ выполняется (оба --- ограничения одного $s$), а $\varphi$
+ --- гомоморфизм, поэтому $\varphi(s_i)|=\varphi(s_j)|$.
+\item Аксиома (F2) \emph{пучка $\Shv{G}$} даёт единственное
+ $t\in\Shv{G}(U)$ с $t|_{U_i}=t_i$. Полагаем $\bar\varphi(s):=t$.
+\item Независимость от выбора покрытия: для другого покрытия полученные
+ локальные значения на пересечениях совпадают, и снова работает (F2)
+ (либо (F1) --- для единственности).
+\end{conditions}
+
+Ясно, что $\bar\varphi\circ i=\varphi$ (берём покрытие из одного
+множества $U$). Диаграмма~\ref{dgm:eta} фиксирует, что получилось:
+$\eta_{\Shv{G}}$ --- естественное по $\Shv{G}$ преобразование
+$\Hom(\Shv{F},-)\Rightarrow\Hom(\Shv{F}^{+},-)$.
+
+\begin{diagram}{Слева: $\eta_{\Shv{G}}$ --- естественное по $\Shv{G}$
+ преобразование $\Hom(\Shv{F},-)\Rightarrow\Hom(\Shv{F}^{+},-)$;
+ справа: $\bar\varphi$ --- единственное продолжение $\varphi$
+ до $\Shv{F}^{+}$.\label{dgm:eta}}
+\begin{tikzcd}[cd style]
+ \Hom(\Shv{F},\Shv{G}_1) \ar[r,"\alpha\circ-"] \ar[d,"\eta_{\Shv{G}_1}"'] &
+ \Hom(\Shv{F},\Shv{G}_2) \ar[d,"\eta_{\Shv{G}_2}"] \\
+ \Hom(\Shv{F}^{+},\Shv{G}_1) \ar[r,"\alpha\circ-"'] &
+ \Hom(\Shv{F}^{+},\Shv{G}_2)
+\end{tikzcd}
+\qquad
+\begin{tikzcd}[cd style,column sep=huge,row sep=huge]
+ \Shv{F} \ar[r,"i"] \ar[dr,"\varphi"'] & \Shv{F}^{+} \ar[d,"\bar\varphi"] \\
+  & \Shv{G}
+\end{tikzcd}
+\end{diagram}
+
+Пояснение к диаграмме~\ref{dgm:eta}. Слева --- квадрат
+натуральности $\eta_{\Shv{G}}$: домножение морфизма предпучков
+на $\alpha\colon\Shv{G}_1\to\Shv{G}_2$ и переход от
+$\Hom(\Shv{F},-)$ к $\Hom(\Shv{F}^{+},-)$ коммутируют, т.\,е.\
+$\eta$ --- преобразование функторов. Справа --- из чего состоит
+компонента $\eta_{\Shv{G}}$: к морфизм $\varphi\colon\Shv{F}\to
+\Shv{G}$ единственно продолжается до $\bar\varphi\colon\Shv{F}^{+}
+\to\Shv{G}$ с $\bar\varphi\circ i=\varphi$ (треугольник), и
+именно $\eta_{\Shv{G}}(\varphi)=\bar\varphi$.
+
+\subsection{Почему $\eta_{\Shv{G}}$ --- изоморфизм}
+Остаётся проверить, что каждая компонента $\eta_{\Shv{G}}$ ---
+биекция; именно это позволяет применить Факт~\ref{fact:hom}.
+\begin{bullets}
+\item \emph{Инъективность}: пусть $\eta_{\Shv{G}}(\varphi_1)=
+ \eta_{\Shv{G}}(\varphi_2)$. Продолжения совпадают, поэтому после
+ композиции с каноническим $i\colon\Shv{F}\to\Shv{F}^{+}$ получаем
+ $\varphi_1=\varphi_2$. Иными словами, отображение ограничения
+ $\Hom(\Shv{F}^{+},\Shv{G})\to\Hom(\Shv{F},\Shv{G})$ является левым
+ обратным к $\eta_{\Shv{G}}$.
+\item \emph{Сюръективность}: пусть $\psi\colon\Shv{F}^{+}\to\Shv{G}$.
+ Рассмотрим продолжение $\overline{\psi\circ i}$. Для каждого
+ $s\in\Shv{F}^{+}(U)$ существует покрытие $U=\bigcup U_i$, на котором
+ $s|_{U_i}=i(s_i)$ для $s_i\in\Shv{F}(U_i)$. На каждом $U_i$ оба
+ сечения $\overline{\psi\circ i}(s)$ и $\psi(s)$ равны
+ $\psi(i(s_i))$. По (F1) для пучка $\Shv{G}$ они равны на $U$.
+ Значит, $\eta_{\Shv{G}}(\psi\circ i)=\psi$.
+\end{bullets}
+
+Итак $\Hom(\Shv{F},-)\simeq\Hom(\Shv{F}^{+},-)$ естественно, и
+Факт~\ref{fact:hom} даёт $\Shv{F}^{+}\simeq\Shv{F}^{\#}$.
+\hfill$\square$
+
+\begin{bookbox}
+\booksrc{Манин, \S\,2.1.6---2.1.7, с.~112---113: <<секции $\Shv{P}^{+}(U)$
+ определяются как некоторые наборы ростков $\prod_{x\in U}\Shv{P}_x$,
+ которые в естественном смысле согласованы>>; там же описаны \emph{два}
+ процесса <<прокачивания>>: (1) \emph{уменьшить} число сечений,
+ отождествляя те, что начинают совпадать на мелком покрытии; (2)
+ \emph{увеличить} число сечений, добавляя склеенные из согласованных
+ наборов. Теорема-определение 2.1.7: $\Shv{P}^{+}$ --- пучок и
+ $(\Shv{P}^{+})_x=\Shv{P}_x$.
+\par\smallskip
+ Годеман, Замечание 1.2.3, с.~133 --- пучок, порождённый предпучком
+ ($\Shv{F}^{\#}=\tilde{\Shv{F}}$); Годеман, п.~3.9, с.~183 ---
+ <<локальное равенство» в $\Shv{F}(X)$.
+}
+\end{bookbox}
+
+%==================================================================
+\section{Пример: точные и замкнутые формы}
+%==================================================================
+
+\begin{exm}\label{exm:forms}
+Пусть $X$ --- гладкое многообразие и $k\geq1$,
+$\Shv{F}$ --- предпучок точных ($d$-точных) $k$-форм на $X$,
+$\Shv{H}=\Omega^{k}_X$ --- пучок всех $k$-форм. Тогда
+$\Shv{F}^{+}$ --- пучок форм, локально точных. По классической лемме
+Пуанкаре локально любая замкнутая форма точна, и обратно: точная форма
+всегда замкнута ($d^2=0$). Отсюда
+\begin{equation}\label{eq:forms}
+ \Shv{F}^{+}=\{\text{замкнутые }k\text{-формы}\},\qquad
+ \Shv{F}^{\#}\simeq\Shv{F}^{+},
+\end{equation}
+то есть <<прокачивание>> предпучка точных форм даёт пучок замкнутых
+форм: глобально точных форм может быть мало (группы когомологий!),
+но локально точных --- столько, сколько хочется.
+\end{exm}
+
+\begin{bookbox}
+\booksrc{Годеман, гл.~II, \S\,2, с.~156: при доказательстве точности
+ используется классическая теорема Пуанкаре (локально любая замкнутая
+ форма точна); п.~2.8.1, с.~159 --- примеры пучков $\Omega^p$
+ дифференциальных форм и пучков ростков как $\mathcal{O}$-модулей.
+ Манин, \S\,2.1.2, с.~110 --- предпучки модулей над предпучком колец.
+}
+\end{bookbox}
+
+%==================================================================
+\section{Ядро, образ и точные последовательности}
+%==================================================================
+
+\subsection{Ядро и образ}
+\leavevmode\par
+\begin{defn}[ядро и образ]
+Пусть $f\colon\Shv{F}\to\Shv{G}$ --- гомоморфизм пучков.
+\emph{Ядром} $\ker f$ называется пучок, определяемый поэлементно:
+\begin{equation}\label{eq:ker}
+ (\ker f)(U)=\ker\bigl(\Shv{F}(U)\xrightarrow{f_U}\Shv{G}(U)\bigr),
+\end{equation}
+ограничения --- обычные. \emph{Образ} определяется по формуле
+\begin{equation}\label{eq:im}
+ \operatorname{Im}f=\bigl(\operatorname{Im}f\bigr)^{\#},
+\end{equation}
+где $\operatorname{Im}f$ справа --- предпучок с группами
+$\operatorname{Im}\bigl(\Shv{F}(U)\xrightarrow{f_U}\Shv{G}(U)\bigr)$,
+а $({-})^{\#}$ --- прокачивание.
+\end{defn}
+
+Почему образ \emph{нельзя} оставить поэлементным: множество
+$\operatorname{Im}(f_U)$, вообще говоря, не является пучком. Пример:
+пусть $\Shv{F}$ --- постоянный предпучок $\mathbb{Z}$, а
+$\Shv{G}$ --- пучок, в котором локально ненулевые вещи склеиваются;
+образ поэлементно будет <<предпучком, который надо досклеить>>.
+Прокачивание~\eqref{eq:im} --- это и есть правильный образ: он
+удовлетворяет (F2) по построению.
+
+\begin{rem}[ядро не требует прокачивания]
+Ядро --- обратная операция: точность поэлементна сохраняется, потому
+что $\Shv{F}\mapsto\Shv{F}(U)$ --- точный функтор (см.~Годемана,
+п.~1.9). Поэтому $\ker f$ поэлементно --- уже пучок.
+\end{rem}
+
+\subsection{Точные последовательности}
+\leavevmode\par
+\begin{defn}
+Последовательность пучков
+$\Shv{F}\xrightarrow{\ f\ }\Shv{G}\xrightarrow{\ g\ }\Shv{H}$
+называется \emph{точной}, если $\ker g=\operatorname{Im}f$.
+\end{defn}
+
+Диаграмма~\ref{dgm:canon} показывает каноническое разложение
+гомоморфизма, из которого и состоит определение.
+
+\begin{diagram}{Каноническое разложение гомоморфизма пучков и
+ точность: $\operatorname{Im}f=\ker g$.\label{dgm:canon}}
+\begin{tikzcd}[cd style,row sep=large]
+0 \ar[r] & \ker f \ar[r,hook] & \Shv{F} \ar[r,"f"'] \ar[d,two heads] &
+\Shv{G} \ar[r,"g"] & \Shv{H} \\
+ & & \operatorname{Im} f \ar[r,equal] & \ker g \ar[r] \ar[u,hook] & 0
+\end{tikzcd}
+\end{diagram}
+
+Пояснение к диаграмме~\ref{dgm:canon}. Две вертикали и стрелка
+равенства и есть каноническое разложение: $\Shv{F}$ сюръективно
+спускается на свой образ $\operatorname{Im}f$ (вниз, <<две
+головы>>), образ отождествляется с $\ker g$, а $\ker g$
+включается обратно в $\Shv{G}$ (вверх, крючок). Таким образом
+$f$ читается как <<сначала спуститься на образ, потом включить>>:
+$\Shv{F}\twoheadrightarrow\operatorname{Im}f=\ker g\hookrightarrow
+\Shv{G}$. Слева $\ker f\hookrightarrow\Shv{F}$ --- участок, на
+котором $f$ равен нулю; полнота (инъективность слева,
+сюръективность справа) как раз закодирована нулями по краям.
+
+\subsection{Как проверять точность}
+Практическое правило: точность последовательности пучков проверяется
+на ростках $\Shv{F}_x\to\Shv{G}_x\to\Shv{H}_x$ для всех $x\in X$.
+Эквивалентно, каждое сечение из ядра второго отображения должно
+\emph{локально} на покрытии быть образом сечения первого пучка.
+Не следует требовать поточечной сюръективности отображений сечений над
+каждым открытым множеством: эпиморфизм пучков вообще не обязан быть
+сюръективен на глобальных сечениях.
+
+Частый пример: $0\to\Shv{F}\to\Shv{G}$ точна тогда и только тогда,
+когда $\Shv{F}\to\Shv{G}$ --- инъекция \emph{в каждом слое}.
+
+\begin{bookbox}
+\booksrc{Годеман, гл.~I, п.~1.8, с.~26---29 --- ядро, коядро, образ и
+ кообраз в аддитивной категории, определение точной последовательности;
+ гл.~II, \S\,2.4---2.5, с.~153---154 --- каноническое разложение
+ гомоморфизма пучков и точные последовательности: точность
+ последовательности $\mathcal{O}$-модулей эквивалентна точности на
+ каждой точке $x$, т.\,е. $\ker(g)(x)=\operatorname{Im}(f)(x)$.
+\par\smallskip
+ Манин, \S\,2.1.4, с.~110 --- аксиома пучка как точность
+ последовательности
+ $0\to\Shv{P}(U)\to\prod_i\Shv{P}(U_i)\rightrightarrows
+ \prod_{i,j}\Shv{P}(U_i\cap U_j)$;
+ \S\,2.9, с.~141 --- обзор предпучков и пучков модулей.
+}
+\end{bookbox}
+
+%==================================================================
+\section{Итог лекции}
+%==================================================================
+
+\begin{conditions}
+\item Для предпучка $\Shv{F}$ построено локальное накрывающее
+ пространство $\pi\colon\et(\Shv{F})\to X$ с
+ $\pi^{-1}(x)=\Shv{F}_x=\dirlim_{U\ni x}\Shv{F}(U)$; топология на нём
+  --- наиболее тонкая, при которой все сечения непрерывны, и
+ $\pi$ --- локальный гомеоморфизм.
+\item Пучок $\Shv{F}^{\#}$ определяется как пучок непрерывных сечений
+ $\pi$; он удовлетворяет (F1) и (F2): (F1) --- потому что множество
+ точек равенства двух сечений открыто, (F2) --- потому что
+ согласованные непрерывные выборы ростков склеиваются в
+ непрерывный.
+\item Для постоянного предпучка $\Shv{F}(U)=A$ имеем
+ $\et(\Shv{F})=X\times A$ (дискретное $A$), а $\Shv{F}^{\#}$ ---
+ пучок локально постоянных функций.
+\item $\Hom(\Shv{F},\Shv{G})\simeq\Hom(\Shv{F}^{\#},\Shv{G})$
+ естественно по $\Shv{F}$ и по $\Shv{G}$ при пучке $\Shv{G}$;
+ поэтому <<прокачивание>> определено функторно и однозначно
+ (правильно: $\Shv{F}\mapsto\Shv{F}^{\#}$ --- левый сопряжённый к
+ включению $\Sh\hookrightarrow\PSh$).
+\item Естественный изоморфизм $\Hom(\Shv{F},-)\simeq\Hom(\Shv{F}',-)$
+ при пучке $\Shv{F}'$ влечёт $\Shv{F}\simeq\Shv{F}'$: следует из
+ <<Факта>> о том, что $\Hom(A,-)$ определяет объект категории
+ однозначно (лемма Ёнеды).
+\item Конструкция $\Shv{F}^{+}$ (секции пучка $\Shv{H}\supset\Shv{F}$,
+ локально принадлежащие $\Shv{F}$) даёт то же самое:
+ $\Shv{F}^{+}\simeq\Shv{F}^{\#}$; пример --- пучок замкнутых форм из
+ предпучка точных.
+\item Ядро гомоморфизма пучков определяется поэлементно, образ нужно
+ <<прокачивать»: $\operatorname{Im}f=(\operatorname{Im}f)^{\#}$;
+  точная последовательность пучков --- это точность на каждом ростке;
+  на сечениях над открытым множеством требуется лишь локальное
+  представление элемента ядра как образа.
+\end{conditions}
+
+\subsection{Что дальше}
+Лекция~3, как правило, начинается с того, что все построенные
+конструкции (ядро, образ, $\Shv{F}^{+}$) укладываются в \emph{абелеву
+категорию} пучков, и переходят к резольвентам и когомологиям. Уже сейчас
+видно главное: пучки --- это <<функции>>, которые локально выглядят
+просто, а глобальные свойства измеряются коэффициентами при
+<<клейке».
+
+%==================================================================
+\begin{thebibliography}{9}
+\bibitem{god}
+ Годеман Р. \emph{Алгебраическая топология и теория пучков}. --- М.:
+ Издательство иностранной литературы, 1961. --- Гл.~I, \S\,1.7, 1.8, 1.9;
+ гл.~II, \S\,1 (п.~1.1---1.4), \S\,2, \S\,2.4---2.5, п.~3.9.
+\bibitem{manin}
+ Манин Ю.~И. \emph{Введение в теорию схем и квантовые группы} / под ред.
+  Д.~А.~Лейтеса и С.~М.~Львовского. --- М.: МЦНМО, 2012. ---
+  \S\,1.10, \S\,1.12; \S\,1.16.5---1.16.9; \S\,2.1.1---2.1.9.
+\bibitem{lec}
+ Лекция 2 (19.09), рукописный конспект: lecture-02/photo\_1.jpg
+ \ldots\ photo\_7.jpg (стр.~9---15 тетради); лекция~1 ---
+ lecture-01/.
+\end{thebibliography}
+
+\end{document}
