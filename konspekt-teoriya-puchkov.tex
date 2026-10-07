@@ -1,0 +1,1363 @@
+% !TeX program = xelatex
+% Сводный тематический конспект курса С. М. Львовского по теории пучков
+% (лекции 1--3). Материал лекции 2 подключается кусками из parts/*.tex,
+% которые получены разрезанием исходника lecture-02/lecture-2.tex.
+% Оформление, рисунки и разборы сохранены из конспекта лекции 2.
+% Формат B5, шрифт PT Serif; обозначения: \Shv{F} — предпучок/пучок,
+% \res — отображение ограничения. На полях — пояснения (\mn).
+\documentclass[11pt,b5paper]{article}
+
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setdefaultlanguage{russian}
+\setotherlanguage{english}
+\defaultfontfeatures{Ligatures=TeX}
+\setmainfont{PT Serif}
+
+\usepackage{geometry}
+\geometry{paperwidth=21cm,paperheight=28cm,inner=1.8cm,outer=5.4cm,
+  top=1.7cm,bottom=1.5cm,headsep=8pt}
+\setlength{\marginparwidth}{2.6cm}
+\setlength{\marginparsep}{0.5cm}
+
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{mathrsfs}                 % \mathscr — начертание предпучков
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,decorations.pathreplacing,shapes.geometric,patterns}
+\usepackage{tikz-cd}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{titletoc}
+\usepackage{needspace}
+\usepackage{fancyhdr}
+\usepackage{indentfirst}
+\usepackage{marginnote}
+
+% Токены дизайн-системы (навык brutalism: bergside/awesome-design-skills)
+\definecolor{text}{HTML}{111827}
+\definecolor{primary}{HTML}{DD614C}
+\definecolor{secondary}{HTML}{DAA144}
+\definecolor{success}{HTML}{16A34A}
+\definecolor{warning}{HTML}{D97706}
+\definecolor{danger}{HTML}{DC2626}
+% Цвета ссылок — как у Шейкина (тёмно-красные ссылки, зелёные цитаты)
+\definecolor{sheykinlink}{rgb}{0.6,0,0}
+\definecolor{sheykincite}{rgb}{0,0.6,0}
+\definecolor{sheykinurl}{rgb}{0,0,0.9}
+
+\usepackage[unicode,psdextra,linktocpage=true,colorlinks=true,
+  linkcolor=sheykinlink,citecolor=sheykincite,urlcolor=sheykinurl]{hyperref}
+% polyglossia (russian) делает " активным символом, что ломает подписи
+% в tikz-cd (\ar[r,"f"]); нам " не нужен — в тексте используются «».
+\AtBeginDocument{\catcode`\"=12\relax\color{text}}
+
+%------------------------------------------------------------------
+% Обозначения
+%------------------------------------------------------------------
+\newcommand{\et}{\text{ét}}
+\newcommand{\Hom}{\operatorname{Hom}}
+\newcommand{\Sh}{\mathrm{Sh}}
+\newcommand{\PSh}{\mathrm{PSh}}
+\newcommand{\id}{\mathrm{id}}
+\newcommand{\Shv}[1]{\mathscr{#1}}   % предпучок/пучок
+\newcommand{\Top}{\mathrm{Top}}
+\newcommand{\res}{\rho}              % отображение ограничения
+\newcommand{\dirlim}{\varinjlim}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\I}{\mathscr I}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\smashop}[1]{\mathrm{#1}}
+
+\theoremstyle{plain}
+\newtheorem{thminner}{Утверждение}[section]
+\newtheorem{leminner}[thminner]{Лемма}
+\newtheorem{factinner}[thminner]{Факт}
+\newtheorem{corinner}[thminner]{Следствие}
+\theoremstyle{definition}
+\newtheorem{defninner}[thminner]{Определение}
+\newtheorem{exminner}[thminner]{Пример}
+\newtheorem{assinner}[thminner]{Предположение}
+\theoremstyle{remark}
+\newtheorem{reminner}[thminner]{Замечание}
+
+% Теоремные окружения набираются целиком в коробке: заголовок никогда
+% не оторвётся от текста, блок не рвётся на границе страниц.
+\newsavebox{\thmbox}
+\newcommand{\thmbeg}{%
+  \par\smallskip
+  \begin{lrbox}{\thmbox}%
+  \begin{minipage}{\linewidth}}
+\newcommand{\thmend}{%
+  \end{minipage}%
+  \end{lrbox}%
+  \noindent\usebox{\thmbox}%
+  \par\smallskip}
+\newenvironment{thm}{\thmbeg\begin{thminner}}{\end{thminner}\thmend}
+\newenvironment{lem}{\thmbeg\begin{leminner}}{\end{leminner}\thmend}
+\newenvironment{fact}{\thmbeg\begin{factinner}}{\end{factinner}\thmend}
+\newenvironment{cor}{\thmbeg\begin{corinner}}{\end{corinner}\thmend}
+\newenvironment{defn}{\thmbeg\begin{defninner}}{\end{defninner}\thmend}
+\newenvironment{exm}{\thmbeg\begin{exminner}}{\end{exminner}\thmend}
+\newenvironment{ass}{\thmbeg\begin{assinner}}{\end{assinner}\thmend}
+\newenvironment{rem}{\thmbeg\begin{reminner}}{\end{reminner}\thmend}
+
+% Боксовая обвязка \thmbeg/\thmend ломает вычисление ширины в пакете
+% marginnote (рамки в ней всё равно нет — она лишь держит заголовок
+% рядом с текстом). Поэтому теоремы набираются обычным абзацем.
+\renewcommand{\thmbeg}{\par\smallskip}
+\renewcommand{\thmend}{\par\smallskip}
+
+% Блоки-дополнения: серый текст без рамок (стиль Шейкина)
+\newenvironment{bookbox}{\par\smallskip\begingroup\color{gray}\noindent
+  \ignorespaces}{\par\endgroup\smallskip}
+\newcommand{\booksrc}[1]{%
+  \noindent{\bfseries\small Дополнение из книги:}\par\smallskip
+  \noindent#1\par\smallskip}
+
+\newcommand{\sectionsrc}[1]{\par\smallskip\noindent
+  {\color{gray}\footnotesize По сканам: #1}\par\medskip}
+
+% Полосные пояснения: «сложные места» и напоминания
+\newcommand{\mn}[1]{\marginnote{\raggedright\footnotesize
+  \color{gray}\textcolor{primary}{$\bullet$}\,#1}}
+\setlength{\marginparpush}{1.6\baselineskip}
+
+%------------------------------------------------------------------
+% Нумерация рисунков и диаграмм (не «плавающие»: стоят на своём месте)
+%------------------------------------------------------------------
+\newcounter{ris}[section]
+\renewcommand{\theris}{\thesection.\arabic{ris}}
+\newcounter{dgm}[section]
+\renewcommand{\thedgm}{\thesection.\arabic{dgm}}
+\newcommand{\risCap}{}
+\newcommand{\dgmCap}{}
+
+\newsavebox{\risbox}
+\newsavebox{\dgmbox}
+\newenvironment{risunok}[1]{%
+  \par\medskip\refstepcounter{ris}%
+  \renewcommand{\risCap}{#1}%
+  \par\centering\begingroup
+  \begin{lrbox}{\risbox}%
+  \begin{minipage}{\linewidth}%
+  \centering}
+ {\par\smallskip{\small Рис.~\theris.~\risCap}%
+  \end{minipage}%
+  \end{lrbox}%
+  \usebox{\risbox}%
+  \endgroup\par\medskip}
+
+\newenvironment{diagram}[1]{%
+  \par\medskip\refstepcounter{dgm}%
+  \renewcommand{\dgmCap}{#1}%
+  \par\centering\begingroup
+  \begin{lrbox}{\dgmbox}%
+  \begin{minipage}{\linewidth}%
+  \centering}
+ {\par\smallskip{\small Диаг.~\thedgm.~\dgmCap}%
+  \end{minipage}%
+  \end{lrbox}%
+  \usebox{\dgmbox}%
+  \endgroup\par\medskip}
+
+% стиль для диаграмм tikz-cd
+\tikzset{cd style/.style={column sep=1.7em,row sep=1.6em,
+  every node/.style={font=\small}}}
+
+% единый стиль иллюстраций (рисунков); цвета — токены brutalism
+\tikzset{
+  fig base/.style   = {line width=0.9pt,draw=text},
+  fig open/.style   = {line width=0.7pt,dashed,draw=primary},
+  fig open2/.style  = {line width=0.7pt,dashed,draw=success},
+  fig fiber/.style  = {line width=0.55pt,dotted,draw=gray!75!black},
+  fig sect/.style   = {line width=1.4pt,draw=danger},
+  fig leafA/.style  = {line width=1.4pt,draw=primary},
+  fig leafB/.style  = {line width=1.4pt,draw=success},
+  fig dot/.style    = {circle,fill=text,inner sep=0pt,minimum size=4.6pt},
+  fig note/.style   = {font=\footnotesize,inner sep=1.5pt},
+}
+
+\setlength{\emergencystretch}{3em}
+\tolerance=3000
+\setlength{\hfuzz}{2pt}
+\setlist{nosep,leftmargin=*}
+\setlist[enumerate,1]{label=[\arabic*],leftmargin=*}
+\newlist{conditions}{enumerate}{2}
+\setlist[conditions,1]{
+	label=(\roman{conditionsi}),
+	leftmargin=1cm,
+	rightmargin=.5cm
+}
+\setlist[conditions,2]{
+	label=(\roman{conditionsi}.\alph{conditionsii}),
+	leftmargin=1cm,
+	rightmargin=.5cm
+}
+\newlist{bullets}{itemize}{3}
+\setlist[bullets,1]{label=$\circ$,leftmargin=1cm,rightmargin=.5cm}
+\setlist[bullets,2]{label=--,leftmargin=1cm,rightmargin=.5cm}
+\setlist[bullets,3]{label=$\diamond$,leftmargin=1cm,rightmargin=.5cm}
+
+%--- Заголовки: \section простые (как у Шейкина), подзаголовки ---
+%--- runin (жирный / курсив), как обговорено ------------------------
+\titleformat{\section}[block]
+  {\normalfont\Large\bfseries}
+  {\thesection.}{.5em}{}
+\titleformat{name=\section,numberless}[block]
+  {\normalfont\Large\bfseries}
+  {}{0pt}{}
+\titlespacing*{\section}{0pt}{16pt}{8pt}
+\titleformat{\subsection}[runin]
+  {\normalfont\bfseries}
+  {\thesubsection.}{.5em}{}
+  [.]\titlespacing{\subsection}{0pt}{1.5ex plus .1ex minus .2ex}{1ex}
+\titleformat{name=\subsubsection,numberless}[runin]
+  {\normalfont\itshape}{}{0pt}{}[.]
+\titlespacing{name=\subsubsection,numberless}{0pt}
+  {1.5ex plus .1ex minus .1ex}{1ex}
+% Заголовок не остаётся один внизу страницы: \Needspace до вызова
+% (внутри формата titlesec он не срабатывает).
+\let\brutsection\section
+\renewcommand{\section}{\Needspace{7\baselineskip}\brutsection}
+\let\brutsubsection\subsection
+\renewcommand{\subsection}{\Needspace{5\baselineskip}\brutsubsection}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+\fancyhead[L]{\footnotesize Теория пучков. Лекции 1--3}
+\fancyhead[R]{\footnotesize\thepage}
+
+\makeatletter
+% Оглавление: единая колонка номеров (2.6em), заголовки с одного края,
+% номера страниц — по правому краю текстовой полосы.
+\titlecontents{section}
+  [0pt]
+  {\addvspace{10pt}\normalfont\bfseries}
+  {\contentslabel[\thecontentslabel]{2.6em}}
+  {}
+  {\hfill\contentspage}
+  [\vspace{3pt}{\color{text}\hrule height0.4pt}]
+\titlecontents{subsection}
+  [0pt]
+  {\addvspace{2pt}\normalfont}
+  {\contentslabel[\thecontentslabel]{2.6em}}
+  {}
+  {\titlerule*[0.45em]{.}\contentspage}
+\makeatother
+%------------------------------------------------------------------
+
+\begin{document}
+
+\thispagestyle{empty}
+\vspace*{1.2cm}
+\begin{center}
+{\large Конспект курса, лекции 1--3\par}
+\vspace{0.9cm}
+{\Large\bfseries Предпучки, пучки и локально-глобальные\\[4pt]
+  методы в теории пучков\par}
+\vspace{0.9cm}
+{\large С.~М.~Львовский --- курс теории пучков\par}
+\vspace{2.2cm}
+\begin{minipage}{.86\textwidth}
+\centering
+Изложение построено \emph{по темам}, а не по лекциям: одна тема --- один
+связный кусок текста, собранный из всех трёх лекций и из книг. Сканы
+рукописи лежат в \textenglish{\texttt{lecture-01},
+\texttt{lecture-02}, \texttt{lecture-03}}; материал лекции~2
+включён почти целиком,
+включая разбор рисунков.
+\par\smallskip
+\color{gray}На полях --- пояснения: там, где легко ошибиться, и там, где
+стоит повторить. Формат~B5.
+\end{minipage}
+\end{center}
+
+\bigskip
+\tableofcontents
+\clearpage
+
+%==================================================================
+\section{Как читать этот конспект}
+%==================================================================
+
+\subsection{Логика изложения}
+Курс решает одну задачу и делает это постепенно, в четыре шага.
+\begin{conditions}
+\item Локальные данные. Мы хотим уметь ограничивать решение с
+  большого открытого множества на меньшее. Значит, нужно назначить
+  группу \emph{каждому} открытому множеству и указать, как решение
+  переносится при сужении. Это предпучок.
+\item Склейка. Произвольного предпучка недостаточно: локальные данные
+  могут не сходиться. Добавляем два требования --- (F1) и (F2) ---
+  и получаем пучок.
+\item Локальная точка зрения. Всё поведение пучка видно в отдельной
+  точке: пучок определяется своими \emph{ростками}, а точность
+  последовательности проверяется на ростках.
+\item Препятствия. Точности на ростках недостаточно для глобальных
+  сечений: глобальная склейка может неExistствовать. Мера остатка
+  препятствия --- когомологии, а удобные «нулевые» объекты ---
+  фласковые пучки.
+\end{conditions}
+\mn{Если потерялись: каждый последующий пункт отвечает на
+     \emph{неразрешимую} проблему предыдущего. Пучок нужен, чтобы
+     склеивать; ростки нужны, чтобы сводить геометрию к точности;
+     когомологии нужны, потому что точность на ростках не даёт
+     глобальной точности.}
+
+\subsection{Обозначения}
+Для предпучков и пучков используется начертание $\Shv{F},\Shv{G},
+\Shv{H},\Shv{P}$; отображение ограничения обозначается $\res$.
+Остальные обозначения:
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{0.30\textwidth}p{0.63\textwidth}@{}}
+\toprule
+Обозначение & Что означает \\
+\midrule
+$X$ & топологическое пространство (база) \\
+$U,V,W,U_i$ & открытые подмножества $X$ \\
+$\Top_X$ & категория открытых множеств: объекты --- открытые,
+  морфизмы --- включения \\
+$\Shv{F}(U)$ & сечения $\Shv{F}$ над $U$; иногда $\Gamma(U,\Shv{F})$ \\
+$\res^{V}_{U}\colon\Shv{F}(V)\to\Shv{F}(U)$ &
+  отображение ограничения при $U\subset V$; коротко
+  $s|_{V}:=\res^{V}_{U}(s)$ \\
+$\res_i:=\res^{U_i}_{U}$, $\res_x:=\res^{V_x}_{U}$ &
+  те же ограничения с короткой записью \\
+$\Shv{F}_x$ & слой (пространство ростков) над точкой $x$ \\
+$s_x$, $\tilde s(x)$ & росток (зародыш) сечения $s$ в точке $x$ \\
+$\et(\Shv{F})$ & пространство ростков (<<этажное>> пространство) \\
+$\pi\colon\et(\Shv{F})\to X$ & проекция, $\pi|_{\Shv{F}_x}\equiv x$ \\
+$\Shv{F}^{\#}$ & пучок сечений $\pi$, <<прокачивание>> $\Shv{F}$ \\
+$i\colon\Shv{F}\to\Shv{F}^{\#}$ & канонический гомоморфизм предпучков \\
+$\Shv{F}^{+}$ & секции пучка $\Shv{H}\supset\Shv{F}$, локально
+  принадлежащие $\Shv{F}$ \\
+$\PSh(X),\Sh(X)$ & категории предпучков и пучков на $X$ \\
+$\ker f$, $\operatorname{im}_{\Sh}f$ & ядро и образ морфизма пучков
+  (образ --- в категории пучков!) \\
+$\Gamma(X,-)$ & функтор глобальных сечений \\
+$H^q(X,\Shv{F})$ & когомологии пучка в степени $q$ \\
+$(\mathrm{F0}),(\mathrm{F1}),(\mathrm{F2})$ & аксиомы пучка \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Полоска на полях}
+Серые пометки с точкой $\bullet$ на полях --- это пояснения, которые
+не входят в основной текст: тонкие места, предостережения и
+напоминания определений. Читать их полезно с двух сторон: при первом
+прочтении --- как страховка от типичных ошибок, при повторном --- как
+краткий конспект.
+
+%==================================================================
+\section{Локальное против глобального}
+%==================================================================
+
+\subsection{Две задачи, которые не совпадают}
+Почти вся теория пучков вырастает из одного наблюдения: когда объект
+описан <<по кусочкам>>, нужно уметь и собрать его из кусочков. Но
+сборка может не удаться, даже если кусочки есть.
+
+Возьмём открытое множество $U$ и покрытие $U=\bigcup_iU_i$.
+Спрашиваются два разных вопроса:
+\begin{conditions}
+\item \textbf{Локальная разрешимость.} Для каждой точки $x\in U$
+  есть окрестность $V_x\ni x$, в которой задача решается.
+\item \textbf{Глобальная разрешимость.} Решение есть на всём $U$ сразу,
+  и локальные решения \emph{согласованы}: на пересечении $V_x\cap V_y$
+  они совпадают.
+\end{conditions}
+Второе не следует из первого. Пучок --- это в точности такая структура
+данных, где второй вопрос всегда имеет положительный ответ.
+
+\begin{exm}[локальный логарифм]\label{exm:log}
+Пусть $U\subset\C$ открыто и $f:U\to\C^\times$ голоморфна. В каждой
+точке $a$ достаточно малой окрестностью $V\ni a$ функция $f$ не
+обращается в нуль, и тогда существует голоморфный логарифм $g$ на $V$:
+$e^g=f|_V$. Глобального логарифма может не быть. При $U=\C^\times$ и
+$f(z)=z$ его отсутствие видно из
+\[
+  \int_{|z|=1}\frac{f'(z)}{f(z)}\,dz=2\pi i,
+\]
+тогда как для $f=e^g$ этот интеграл равен $\int_{|z|=1}dg=0$ по
+теореме Коши.
+\end{exm}
+
+\mn{Ключевое различие: на $\C^\times$ функция $z$ \emph{не имеет}
+     нулей, поэтому локальный логарифм есть везде. Значит, препятствие
+     не в существовании, а в склейке. В терминах теории пучков
+     препятствие измеряется числом $H^1(X,\underline{\Z})$.}
+
+\begin{risunok}{Локальные логарифмы есть в каждой окрестности, но они не
+  согласуются: значения на двух соседних окрестностях различаются на
+  $2\pi i$, и это различие нельзя убрать постоянной слагаемой.}
+  \label{fig:log}
+\begin{tikzpicture}[>=Stealth,font=\small]
+  \draw[fig base] (0,0) ellipse (3.3 and 0.55);
+  \node[below right] at (3.0,-0.42) {$U=\C^\times$};
+  \begin{scope}
+    \clip (0,0) ellipse (3.3 and 0.55);
+    \fill[primary!12] (-1.7,0) ellipse (1.5 and 0.5);
+    \fill[success!12] (1.7,0) ellipse (1.5 and 0.5);
+  \end{scope}
+  \draw[fig open] (-1.7,0) ellipse (1.5 and 0.5);
+  \draw[fig open2] (1.7,0) ellipse (1.5 and 0.5);
+  \node[primary,above] at (-1.7,0.72) {$V$};
+  \node[success,above] at (1.7,0.72) {$W$};
+  \fill (-1.7,0) circle (2.6pt);
+  \fill (1.7,0) circle (2.6pt);
+  % локальные логарифмы: два «листа» значения Im
+  \draw[fig leafA,smooth] plot coordinates
+    {(-3.15,1.6) (-1.7,1.75) (-0.3,1.9)};
+  \draw[fig leafB,smooth] plot coordinates
+    {(0.3,3.0) (1.7,3.15) (3.15,3.3)};
+  \node[primary] at (-3.2,1.55) {$g$};
+  \node[success] at (3.2,3.35) {$g+2\pi i k$};
+  \draw[->,danger,line width=.9pt,dashed] (0.15,1.55) -- (0.15,2.75);
+  \node[danger,font=\footnotesize,right] at (0.2,2.15) {$2\pi i k$};
+\end{tikzpicture}
+\end{risunok}
+
+Пояснение к рисунку~\ref{fig:log}. Внизу --- база $U=\C^\times$ с
+двумя перекрывающимися окрестностями $V$ (синяя) и $W$ (зелёная).
+Над ними нарисованы две функции: локальный логарифм $g$ над $V$ и
+тот же логарифм, сдвинутый на $2\pi i k$, над $W$. На пересечении они
+различаются на ненулевое кратное $2\pi i$ (красная стрелка). Склеить их
+в одну функцию невозможно: добавление $2\pi i k$ --- единственный
+способ устранить расхождение на пересечении, но на остальном $U$ это
+сдвигает значение. Локальных решений сколько угодно, глобального нет.
+
+\begin{exm}[замкнутая, но не точная форма]\label{exm:s2}
+Пусть $X=S^2$ --- ориентированная сфера и $\omega$ --- форма площади.
+Она замкнута, поскольку $d\omega=0$ по размерности. Она не точна: если
+$\omega=d\eta$, то по теореме Стокса
+\[
+  \int_{S^2}\omega=\int_{S^2}d\eta=\int_{\partial S^2}\eta=0,
+\]
+а интеграл формы площади по ориентированной сфере положителен.
+При этом на малой координатной окрестности замкнутая форма точна по
+лемме Пуанкаре.
+\end{exm}
+
+\begin{rem}[что это говорит о круге рассуждений]
+Второй пример показывает ту же конструкцию в другой одежде. Формы
+$\Omega^k$ --- предпучок. Точные формы $B^k$ --- его образ. Замкнутые
+формы $Z^k$ --- ядро внешней производной. Разрыв между локальной и
+глобальной точностью --- это и есть та первая неразрешимая проблема,
+ради которой вводят пучки. Мы вернёмся к ней в
+\S\,\ref{sec:forms-bridge} и закончим когомологиями.
+\end{rem}
+
+\subsection{Что из этого следует}
+Ниже конструкция разворачивается в обратном порядке: сначала
+описываются данные (предпучок), потом --- условия их согласованности
+(пучок), потом --- способ свести всё к одной точке (ростки), и
+только потом --- способы справиться с тем, что локального знания
+оказывается недостаточно (фласковые пучки и когомологии).
+
+%==================================================================
+\section{Предпучки}
+%==================================================================
+
+\subsection{Категория открытых множеств}
+Пусть $X$ --- топологическое пространство. Категория $\Top_X$
+устроена так: объекты --- открытые подмножества $X$, а морфизм
+$U\to V$ существует тогда и только тогда, когда $U\subset V$. Других
+морфизмов нет, то есть $\Top_X$ --- это в точности множество
+открытых множеств, упорядоченных включением.
+
+Нас интересует только порядок <<больше множество --- меньше
+множество>>. Но данные предпучка мы хотим получать из \emph{одного}
+объекта $X$ функтором, который направление обращает. Это и есть
+контравариантность, и она появляется в определении ниже.
+
+\begin{risunok}{Контравариантный функтор: морфизмы $\Top_X$ идут в
+  ту же сторону, а значения предпучка --- в противоположную. Поэтому
+  ограничение $\res^{V}_{U}$ переводит сечение с \emph{большего}
+  открытого множества на \emph{меньшее}.}
+  \label{fig:contrav}
+\begin{tikzpicture}[>=Stealth,font=\small]
+  % категория Open(X)
+  \node at (0,1.5) {$\Top_X$};
+  \node[draw,rounded corners,inner sep=3pt] (W) at (0,0.9) {$W$};
+  \node[draw,rounded corners,inner sep=3pt] (U) at (0,0.1) {$U$};
+  \node[draw,rounded corners,inner sep=3pt] (Vi) at (0,-0.7) {$V$};
+  \draw[->] (W) -- node[right,font=\footnotesize]{$\subset$} (U);
+  \draw[->] (U) -- node[right,font=\footnotesize]{$\subset$} (Vi);
+  % значения
+  \node at (3.6,1.5) {$\Top_X^{\mathrm{op}}\to\mathrm{AbGr}$};
+  \node[draw,rounded corners,inner sep=3pt] (FW) at (3.6,0.9)
+    {$\Shv{F}(W)$};
+  \node[draw,rounded corners,inner sep=3pt] (FU) at (3.6,0.1)
+    {$\Shv{F}(U)$};
+  \node[draw,rounded corners,inner sep=3pt] (FVi) at (3.6,-0.7)
+    {$\Shv{F}(V)$};
+  \draw[->] (FW) -- node[right,font=\footnotesize]{$\res^{W}_{U}$} (FU);
+  \draw[->] (FU) -- node[right,font=\footnotesize]{$\res^{U}_{V}$} (FVi);
+  % пунктир: соответствие
+  \draw[fig fiber,<->] (W) to[bend left=28] node[above,font=\footnotesize]
+    {$\Shv{F}$} (FW);
+\end{tikzpicture}
+\end{risunok}
+
+Пояснение к рисунку~\ref{fig:contrav}. Слева --- категория открытых
+множеств: $W\supset U\supset V$, стрелки идут вниз. Справа --- значения
+предпучка, и стрелки \emph{развернулись}: $\res^{W}_{U}$ переводит
+$\Shv{F}(W)$ в $\Shv{F}(U)$, то есть работает в противоположную
+сторону. Пунктирная стрелка --- сам функтор. Это и есть определение
+контравариантного функтора, и весь смысл записи $\Shv{F}:\Top_X^{\mathrm{op}}\to\mathrm{AbGr}$
+в том, что все стрелки на картинке смотрят в одну сторону.
+
+%--- материал лекции 2: определение предпучка, аксиомы, примеры ---
+\input{parts/defs.tex}
+
+\subsection{Примеры предпучков, которые не являются пучками}
+Аксиомы (F1) и (F2) отбрасывают довольно много естественных
+конструкций. Разберём характерные случаи из лекции~1.
+
+\begin{exm}[ограниченные функции]\label{exm:bounded}
+Пусть $X=\R$ и пусть $\Shv{P}(U)$ --- группа ограниченных непрерывных
+функций на $U$, с обычными ограничениями. Это предпучок, но не пучок.
+Функция $f(x)=x$ не ограничена на $\R$, но ограничена на каждом из
+$U_n=(-n,n)$. Семейство $f|_{U_n}$ согласовано:
+$\res^{U_n\cap U_m}_{U_n}(f|_{U_n})=\res^{U_n\cap U_m}_{U_m}(f|_{U_m})$,
+и $\bigcup_nU_n=\R$. По (F2) должно существовать $s\in\Shv{P}(\R)$ с
+$s|_{U_n}=f|_{U_n}$, но обязательно $s=f$, а $f$ не ограничена.
+Противоречие.
+\end{exm}
+
+\begin{risunok}{Нарушение (F2) для ограниченных функций: локальные
+  сечения согласованы и покрывают $\R$, но их склейка не ограничена.
+  \label{fig:bounded}}
+\begin{tikzpicture}[>=Stealth,font=\small]
+  \draw[->] (-0.3,0) -- (6.6,0);
+  \draw[->] (0,-0.3) -- (0,3.3);
+  \draw[fig sect,smooth] plot coordinates
+    {(0.1,0.55) (1.6,0.8) (3.2,1.35) (4.9,2.1) (6.2,2.85)};
+  \node[danger] at (6.35,2.9) {$f(x)=x$};
+  \foreach \idx/\rad in {1/1.35,2/2.55,3/3.75} {
+    \draw[fig open] (0,\rad)
+      ellipse [x radius=\idx, y radius=\rad];
+    \node[left] at (-0.08,\rad) {$U_{\idx}$};
+    \foreach \x in {0.6,1.8,3.0} {
+      \draw[fig fiber] (\x,\rad) -- (\x,0);
+    }
+  }
+  \node[font=\footnotesize] at (3.4,3.15)
+    {каждая $f|_{U_n}$ ограничена; склейка $f$ --- нет};
+\end{tikzpicture}
+\end{risunok}
+
+Пояснение к рисунку~\ref{fig:bounded}. Красная кривая --- функция
+$f(x)=x$. Вложенные эллипсы --- растущие окрестности $U_n$, для каждой
+из них ограничение $f|_{U_n}$ является секцией предпучка ограниченных
+функций. Все они согласованы между собой и вместе покрывают $\R$, то
+есть ровно та ситуация, в которой (F2) требует глобальной секции.
+Её нет, поэтому предпучок не пучок.
+
+\begin{exm}[постоянный предпучок не является пучком]\label{exm:const-pre}
+Пусть $A\ne0$ --- абелева группа и положим $\Shv{P}(U)=A$ для всех
+непустых открытых $U$, $\Shv{P}(\varnothing)=0$, а все ограничения
+между непустыми открытыми --- тождественными. Если $U$ несвязно, то
+$U=U_1\sqcup U_2$ с непустыми непересекающимися открытыми кусками.
+Возьмём $a\in A$ и $b\in A$. Секции $a\in\Shv{P}(U_1)$,
+$b\in\Shv{P}(U_2)$ согласованы автоматически: пересечение пусто, а
+$\Shv{P}(\varnothing)=0$. По (F2) они должны склеиться в элемент
+$\Shv{P}(U)$, но при $a\ne b$ это невозможно, поскольку $\Shv{P}(U)$
+одноэлементно по определению.
+\end{exm}
+
+\mn{Частая ошибка: считать, что постоянный пучок $\underline A$ и
+     постоянный предпучок --- одно и то же. Постоянный \emph{пучок}
+     $U\mapsto$ <<локально постоянные функции $U\to A$>> не
+     одноэлементен: на несвязном $U$ он содержит разные значения на
+     разных компонентах. Пример перехода от предпучка к пучку
+     разобран в \S\,\ref{sec:const}.}
+
+\begin{exm}[замкнутые и точные формы]\label{exm:zk-bk}
+Назначение $U\mapsto Z^k(U)=\ker\bigl(d:\Omega^k(U)\to
+\Omega^{k+1}(U)\bigr)$ является пучком: условие $d\omega=0$
+проверяется локально, а секции $\Omega^k$ склеиваются как секции
+пучка, и склейка сохраняет это уравнение.
+\end{exm}
+
+Напротив, $B^k(U)=\operatorname{im}\bigl(d:\Omega^{k-1}(U)\to
+\Omega^k(U)\bigr)$ --- это поточечный образ отображения $d$, и
+существует канонический гомоморфизм предпучков
+$B^k\hookrightarrow\Omega^k$; его образ
+$\operatorname{im}_{\mathrm{pre}}(d)$ есть предпучок. Но он не пучок: точная
+форма $d\eta$ всегда замкнута, так что образ на самом деле лежит в
+$Z^k$; вот обратное включение неверно. На $S^1$ форма угла $d\theta$
+точно локально (на каждой дуге), но не является дифференциалом
+глобальной функции: её интеграл по окружности равен $2\pi\ne0$.
+Следовательно, существуют формы, точные локально, но не точные
+глобально.
+\mn{Это первое появление образа предпучка, который не является
+     пучком. Разбор в \S\,\ref{sec:image} --- почему образ в
+     категории пучков приходится «прокачивать».}
+
+\subsection{Морфизмы предпучков}
+\mn{Все дальнейшие утверждения о точности --- это утверждения о
+     морфизмах предпучков. Поэтому в этом месте стоит потратить
+     минуту на определение.}
+Гомоморфизм предпучков --- это семейство гомоморфизмов
+$f_U:\Shv{F}(U)\to\Shv{G}(U)$ по одному на каждое открытое множество,
+согласованных с ограничениями. Это в точности естественное
+преобразование функторов $\Shv{F}:\Top_X^{\mathrm{op}}\to\mathrm{AbGr}$ и
+$\Shv{G}:\Top_X^{\mathrm{op}}\to\mathrm{AbGr}$.
+
+\begin{rem}[ядро, образ, коядро]
+Поскольку отображение $\Shv{F}\mapsto\Shv{F}(U)$ точно, для
+$\ker f$ и $\operatorname{coker}f$ есть формулы поэлементно:
+\[
+  (\ker f)(U)=\ker(f_U),\qquad
+  (\operatorname{coker} f)(U)=\operatorname{coker}(f_U).
+\]
+Ядро пучка --- всегда пучок; см.\ доказательство в
+\S\,\ref{sec:kernel-image}. Для образа ситуация иная, см.\
+\S\,\ref{sec:image}.
+\end{rem}
+
+%==================================================================
+\section{Ростки}
+%==================================================================
+
+\subsection{Что значит «посмотреть в точку»}
+Предпучек устроен по открытым множествам. Самое маленькое из них,
+содержащее данную точку $x$, --- это $\{x\}$, и оно не открыто. Значит,
+сечение над $\{x\}$ недоступно, и посмотреть на данные «в точке $x$»
+нельзя напрямую.
+
+Обходной путь такой: берём всё меньшие окрестности $x$ и смотрим, как
+сечение над ними выглядит. Две секции считаются одинаковыми, если
+они совпадают на достаточно малой окрестности $x$. Это и есть росток.
+
+\begin{rem}[росток не зависит от выбора окрестности]
+Определение через <<достаточно малую окрестность>> корректно: если
+$s,t$ совпали на одной окрестности $V$, то на любой другой окрестности
+$W$ ростки тоже совпадут, поскольку $s,t$ совпадают на $W\cap V$, и
+это множество достаточно мало. Поэтому отношение
+эквивалентности согласовано, и классы определены однозначно.
+\end{rem}
+
+%--- материал лекции 2: слой как прямой предел, пары, роль ростков ---
+\input{parts/stalks.tex}
+
+\subsection{Пучок определяется ростками}
+\mn{Это утверждение --- рабочая лошадка всего дальнейшего. Им можно
+     пользоваться для проверки равенств, не трогая секции.}
+Из лекции~1 полезно запомнить следующее правило, ради которого в
+теории вообще появляются ростки.
+
+\begin{rem}[критерий на ростках]
+Пусть $f,g:\Shv{F}\to\Shv{G}$ --- гомоморфизмы пучков. Если для всех
+$x\in X$ отображения $f_x,g_x:\Shv{F}_x\to\Shv{G}_x$ совпадают, то
+$f=g$. И наоборот. Действительно, $f_x=g_x$ означает, что $f$ и $g$
+совпадают на некоторой окрестности $x$; по (F1) для $\Shv{G}$ отсюда
+следует $f=g$ на всём открытом множестве.
+\end{rem}
+
+\begin{rem}[точность тоже локальна]
+Отсюда же --- и это главный практический вывод --- точность
+последовательности пучков проверяется на ростках. Формальная версия
+приведена в \S\,\ref{sec:exactness}; пока достаточно сказать, что
+росток --- «минимальное» открытое множество данных, и точность
+похожа на точность в теории модулей, когда проверяют в каждой точке.
+\end{rem}
+
+%==================================================================
+\section{Пространство ростков и ассоциированный пучок}
+%==================================================================
+
+Соберём воедино то, что построили: для предпучка $\Shv{F}$ есть
+слои $\Shv{F}_x$. Склеим их в одно множество, дадим ему топологию, и
+окажется, что пучки можно описать геометрически, без слов
+<<аксиома склейки>>. Это даст конструкцию пучка из любого предпучка.
+
+%--- материал лекции 2: ét(F), топология, сечения, аксиомы, пример ---
+\input{parts/etale.tex}
+\input{parts/sections.tex}
+\input{parts/axioms.tex}
+\input{parts/const.tex}
+
+%==================================================================
+\section{Прокачивание: универсальное свойство}
+%==================================================================
+
+\subsection{Постановка задачи}
+Предыдущий параграф показал, как из предпучка построить пучок: это
+пространство $\et(\Shv{F})$ и секции проекции. Но остаётся вопрос,
+который ставил ещё Львовский в лекции~1 и который мы пока не решили:
+
+\begin{quote}\itshape
+Найти пучок $\Shv{F}^{\#}$, сопоставляемый предпучку $\Shv{F}$ так,
+чтобы для любого пучка $\Shv{G}$ существовал канонический изоморфизм
+\[
+  \Hom(\Shv{F},\Shv{G})\;\simeq\;\Hom(\Shv{F}^{\#},\Shv{G}).
+\]
+\end{quote}
+
+\mn{Читать условие надо внимательно: справа стоят гомоморфизмы
+     \emph{пучков}, то есть $\Shv{F}^{\#}$ — пучок. Слева —
+     гомоморфизмы \emph{предпучков}, то есть $\Shv{G}$ может быть
+     произвольным предпучком. Это не симметрия: условие проверяется
+     для всех пучков $\Shv{G}$ и \emph{ни одного} предпучка.}
+
+Такое свойство называется \emph{универсальным}, и оно появляется в
+любой теории, где есть «свёртка». Оно означает: $\Shv{F}^{\#}$ --- это
+такой пучок, в который предпучок $\Shv{F}$ «вкладывается» наилучшим
+возможным образом.
+
+\subsection{Инъективность}
+Для $\varphi:\Shv{F}^{\#}\to\Shv{G}$ положим
+$\varphi\circ i\colon\Shv{F}\to\Shv{G}$. Это отображение определено,
+и оно индуцирует $\Phi$ из формулировки выше. Инъективность
+$\Phi$ означает, что $\varphi$ восстанавливается по $\varphi\circ i$.
+
+\begin{risunok}{Почему $\varphi$ восстанавливается по $\varphi\circ i$:
+  всякий сечение пучка $\Shv{F}^{\#}$ локально есть образ сечения
+  предпучка, а поведение гомоморфизма пучка локально.}
+  \label{fig:local-image}
+\begin{tikzpicture}[>=Stealth,font=\small]
+  \draw[fig base] (0,0) ellipse (2.6 and 0.5);
+  \begin{scope}
+    \clip (0,0) ellipse (2.6 and 0.5);
+    \fill[primary!12] (-1.2,0) ellipse (1.05 and 0.45);
+    \fill[success!12] (1.2,0) ellipse (1.05 and 0.45);
+  \end{scope}
+  \draw[fig open] (-1.2,0) ellipse (1.05 and 0.45);
+  \draw[fig open2] (1.2,0) ellipse (1.05 and 0.45);
+  \node[primary] at (-2.2,0.75) {$V$};
+  \node[success] at (2.2,0.75) {$W$};
+  \node (t) at (0,-1.05) {$\tilde s\in\Shv{F}^{\#}(U)$};
+  \node (s1) at (-1.2,-1.9) {$i(s_1)$};
+  \node (s2) at (1.2,-1.9) {$i(s_2)$};
+  \draw[->] (t) -- (s1) node[midway,left,font=\footnotesize]
+    {$\tilde s|_V=i(s_1)$};
+  \draw[->] (t) -- (s2) node[midway,right,font=\footnotesize]
+    {$\tilde s|_W=i(s_2)$};
+  \draw[->] (s1) to[bend right=25] node[below,font=\footnotesize]
+    {$\varphi$} (3.9,-1.9);
+  \draw[->] (s2) to[bend left=25] (3.9,-1.9);
+  \node (gs) at (4.6,-1.9) {$\varphi(\tilde s)$};
+  \draw[fig sect] (3.95,-2.05) -- (4.25,-2.05);
+\end{tikzpicture}
+\end{risunok}
+
+Пояснение к рисунку~\ref{fig:local-image}. Красная точка $\tilde s$ ---
+сечение пучка $\Shv{F}^{\#}$ над $U$. На покрытии $U=V\cup W$ оно
+локально имеет вид $i(s_1)$ и $i(s_2)$: такие $s_1,s_2$ существуют
+именно потому, что сечение пучка непрерывно. Значение
+$\varphi(\tilde s)$ вычисляется по одному из них, скажем по $i(s_1)$,
+и совпадает со значением, полученным по $i(s_2)$, --- потому что
+$\varphi$ есть гомоморфизм \emph{пучка}, а не предпучка: его значения
+согласуются локально, и по (F1) совпадение на покрытии означает
+совпадение всюду.
+
+%--- материал лекции 2: полное доказательство теоремы ---
+\input{parts/universal.tex}
+
+%==================================================================
+\section{Проверка единственности: лемма Ёнеды}
+%==================================================================
+
+Универсальное свойство говорит, что $\Shv{F}^{\#}$ задан с точностью до
+изоморфизма. Чтобы утверждать это в таком виде, нужна отдельная
+общая конструкция: если функтор $\Hom(A,-)$ определён, то объект $A$
+определён тоже.
+
+%--- материал лекции 2: «Факт» и критерий ---
+\input{parts/yoneda.tex}
+
+%==================================================================
+\section{Второе прокачивание: секции $\Shv{F}^{+}$}
+
+\label{sec:fplus-sec}
+%==================================================================
+
+Проверять аксиомы для $\et(\Shv{F})$ каждый раз заново не нужно.
+Есть другой путь: взять уже готовый пучок $\Shv{H}$, вложить в него
+предпучок $\Shv{F}$ и взять секции $\Shv{H}$, которые локально
+принадлежат $\Shv{F}$.
+
+%--- материал лекции 2: F^+ ---
+\input{parts/fplus.tex}
+
+%==================================================================
+\section{Мостик к когомологиям: формы}\label{sec:forms-bridge}
+%==================================================================
+
+Прежде чем строить общую теорию, посмотрим на мотивацию из
+\S\,\ref{exm:s2} с правильной стороны. Здесь в полной силе работает
+приём из \S~\ref{sec:fplus-sec}: берём предпучок точных форм и прокачиваем
+его внутри пучка всех форм.
+
+%--- материал лекции 2: пример с формами ---
+\input{parts/forms.tex}
+
+\begin{rem}[что именно здесь не так]
+Обратите внимание на расхождение. Пучок $\Omega^k$ заведомо является
+пучком: формы склеиваются, и $d\omega=0$ проверяется локально. А
+предпучок точных форм --- нет. И вот почему это важно для теории:
+$\ker d=Z^k$ устроен прекрасно, а $\operatorname{im}d$ --- нет.
+Образ гомоморфизма пучков в общем случае не является пучком, и чтобы
+сравнивать $Z^k$ и $B^k$, нужно уметь брать образ <<правильно»,
+то есть с прокачиванием.
+\end{rem}
+
+%==================================================================
+\section{Ядро, образ и точность}\label{sec:kernel-image}
+%==================================================================
+
+\subsection{Ядро пучка есть пучок}
+Начнём с утверждения, которое почти тривиально, но именно его
+отличают от образа.
+
+\begin{thm}\label{thm:ker-sheaf}
+Пусть $f\colon\Shv{F}\to\Shv{G}$ --- гомоморфизм пучков абелевых
+групп. Тогда поточечное ядро $\ker f$ является пучком.
+\end{thm}
+
+\mn{Полезно держать в голове различие: ядро --- операция,
+     сохраняющая точность поэлементно, образ --- нет.}
+
+\begin{proof}
+Условие (F0) для ядра выполняется: $0\in\ker f_U$ при любом $U$.
+Для (F1) достаточно применить (F1) пучка $\Shv{F}$.
+\mn{В доказательстве (F2) используются обе аксиомы пучка $\Shv{F}$:
+      склейка локальных сечений и затем (F1) для $\Shv{G}$;
+      в (F1) нужна только аксиома первого пучка.}
+
+Разберём (F2). Пусть $s_i\in\ker(f_{U_i})$ согласованы на покрытии
+$U=\bigcup_iU_i$. Сначала склеим их по (F2) пучка $\Shv{F}$ в
+$s\in\Shv{F}(U)$ с $s|_{U_i}=s_i$. На каждом $U_i$ имеем
+\[
+  f_{U_i}(s|_{U_i})=f_{U_i}(s_i)=0,
+\]
+поэтому $(f_U(s))|_{U_i}=0$ для всех $i$. Пункт (F1) пучка $\Shv{G}$
+даёт $f_U(s)=0$, то есть $s\in\ker(f_U)$. Единственность склейки
+следует из (F1) пучка $\Shv{F}$.
+\end{proof}
+
+\begin{rem}[почему с образом иначе]\label{rem:image-why}
+Основания для ядра и образа принципиально разные. Ядро --- это
+«поднятая» операция: точный функтор $\Shv{F}\mapsto\Shv{F}(U)$
+переносит точность на себя, поэтому поточечное ядро не может
+испортиться. Образ же устроен как \emph{нижняя} ступень, и точность
+функтора ему ничего не даёт: поточечный образ может не склеиваться.
+\end{rem}
+
+\subsection{Образ: почему его приходится прокачивать}\label{sec:image}
+Стандартная ситуация: $f\colon\Omega^{k-1}\to\Omega^k$ --- внешняя
+производная. Точные формы локально склеиваются в формы, которые
+локально точны, но не обязаны быть точными глобально. Значит,
+$\operatorname{im}(f_U)$ для $f_U\colon\Omega^{k-1}(U)\to\Omega^k(U)$
+не является пучком: нужно взять его ассоциированный пучок.
+
+\begin{exm}[контрпример на окружности]\label{exm:im-s1}
+Пусть $X=S^1$, $\Shv{F}=\Shv{G}=\mathscr C^\infty(S^1)$ и
+$f=d$. Рассмотрим две функции $u_1,u_2\colon S^1\to\R$, равные $0$ и
+$1$ соответственно на двух непересекающихся дугах $U_1\sqcup U_2=
+S^1$. Тогда $du_1=du_2=0$ на $U_1$, $U_2$ и на пересечении, то есть
+$du_i$ согласованы. По (F2) должно существовать $u\in\mathscr
+C^\infty(S^1)$ с $du|_{U_i}=du_i$, откуда $du=0$, то есть $u$
+константа. Но константа $u_1=0$ на одной дуге и $u_2=1$ на другой
+константой не является. Противоречие.
+\end{exm}
+
+\begin{risunok}{Образ не пучок: две «ступеньки» локально постоянной
+  функции согласованы, но их склейка не является функцией со
+  значениями в одном листе. \label{fig:im-s1}}
+\begin{tikzpicture}[>=Stealth,font=\small]
+  \draw[fig base] (0,0) circle (1.85);
+  \draw[fig leafA,line width=1.4pt] (0,0) -- (0,1.85);
+  \node[primary,above] at (0,1.95) {$U_1$: $u_1\equiv0$};
+  \node[danger,below] at (0,-1.95) {$U_2$: $u_2\equiv1$};
+  \node[font=\footnotesize] at (2.6,0.85)
+    {на $U_1\cap U_2$ оба $du_i$ нулевые,};
+  \node[font=\footnotesize] at (2.6,0.45)
+    {но глобально $du=0$ означает};
+  \node[font=\footnotesize] at (2.6,0.05) {const, а $u_1\not\equiv u_2$};
+  \draw[fig sect] (2.2,0.72) -- (3.0,0.72);
+\end{tikzpicture}
+\end{risunok}
+
+\begin{rem}[как выглядит правильный образ]
+Определение образа в категории пучков должно включать прокачивание,
+иначе оно просто не совпадёт с привычным поэлементным образом,
+и утверждение «$\ker g=\operatorname{im}f$» окажется неверным.
+Заметим, что при этом $\bigl(\operatorname{im}_{\Sh} f\bigr)_x=
+\operatorname{im}(f_x)$, то есть на ростках разницы нет. Именно
+поэтому ростки столь полезны: на уровне точек две конструкции
+совпадают, и различие видно только при склейке.
+\end{rem}
+
+\subsection{Точные последовательности}
+Последовательность пучков $\Shv{F}\to\Shv{G}\to\Shv{H}$ называется
+точной, если $\ker g=\operatorname{im}_{\Sh}f$. Из
+\S\,\ref{sec:kernel-image} уже ясно, что формулировка выбрана не
+случайно.
+
+%--- материал лекции 2: каноническое разложение, как проверять точность ---
+\input{parts/exact.tex}
+
+%==================================================================
+\section{Точность — на ростках}\label{sec:exactness}
+%==================================================================
+
+Это место, где чаще всего допускают ошибку, поэтому остановимся и
+запишем всё точно.
+
+\begin{rem}[три разных утверждения, которые путают]\label{rem:three}
+\begin{conditions}
+\item Точность на \emph{ростках}:
+$0\to\Shv{F}_x\to\Shv{G}_x\to\Shv{H}_x\to0$ точна для каждого $x$.
+\item Точность \emph{пучков}: $\ker g=\operatorname{im}_{\Sh}f$ как
+  равенство пучков. Это \emph{эквивалентно} предыдущему.
+\item Точность \emph{последовательности глобальных сечений}:
+$0\to\Shv{F}(X)\to\Shv{G}(X)\to\Shv{H}(X)\to0$ точна. Это уже
+  \emph{не эквивалентно} ни первому, ни второму: из точной
+  последовательности пучков следует лишь левая точность сечений.
+\end{conditions}
+\end{rem}
+
+\mn{Запомнить формулу: точность пучков равносильна точности на
+     ростках. Точность же глобальных сечений из точной
+     последовательности пучков вообще не следует.}
+
+\begin{exm}[эпиморфизм пучков, не сюръективный на сечениях]
+На $X=\C^\times$ есть точная короткая последовательность пучков
+\[
+  0\longrightarrow\underline{\Z}\longrightarrow\mathscr C_{\C}
+  \xrightarrow{\ z\mapsto e^{2\pi iz}\ }\mathscr C_{\C^\times}
+  \longrightarrow 1.
+\]
+Она точна как последовательность пучков: всякая гладкая функция без
+нулей имеет локальный логарифм. Но на глобальных сечениях
+сюръективности нет: $f(z)=z$ не имеет глобального логарифма. Это
+и есть пример неразрешимого пункта из \S\,1.
+\end{exm}
+
+%==================================================================
+\section{Глобальные сечения и когомологии}
+%==================================================================
+
+\subsection{Функтор глобальных сечений}
+Для пучка $\Shv{F}$ положим $\Gamma(X,\Shv{F})=\Shv{F}(X)$. Морфизм
+$\Shv{F}\to\Shv{G}$ индуцирует $\Gamma(X,\Shv{F})\to
+\Gamma(X,\Shv{G})$, поэтому $\Gamma(X,-)$ --- функтор из категории
+пучков в абелевы группы.
+
+\begin{thm}\label{prop:left-exact}
+$\Gamma(X,-)$ точен слева: если $0\to\Shv{F}\to\Shv{G}\to\Shv{H}\to0$
+точна, то $0\to\Gamma(X,\Shv{F})\to\Gamma(X,\Shv{G})\to
+\Gamma(X,\Shv{H})$ точна.
+\end{thm}
+
+\mn{Обратите внимание: в этом доказательстве аксиома (F1) даёт
+     переход от нулевых ростков к нулевому сечению, а аксиома (F2)
+     --- от локальных подъёмов к глобальному. Ровно эти два шага
+     и делают $\Gamma(X,-$ точной слева.}
+
+\begin{proof}
+Инъективность на сечениях. Если $i_X(s)=0$, то $i_x(s_x)=0$ для
+каждого $x$; инъективность $i_x$ даёт $s_x=0$, а (F1) пучка
+$\Shv{G}$ даёт $s=0$.
+
+Подъём элемента ядра. Пусть $t\in\Gamma(X,\Shv{G})$ и $q_X(t)=0$.
+По точности на ростках $t_x\in\ker q_x=\operatorname{im}i_x$; по
+определению ростка это значит, что в некоторой окрестности $U_x$
+существует $s_x\in\Shv{F}(U_x)$ с $i(s_x)=t|_{U_x}$. На пересечении
+$U_x\cap U_y$ имеем $i(s_x|)=t|=i(s_y|)$, а $i$ инъективен как морфизм
+пучков, поэтому $s_x|=s_y|$. По (F2) пучка $\Shv{F}$ они склеиваются
+в $s\in\Shv{F}(X)$, и $i_X(s)=t$. Обратное включение следует из
+$q\circ i=0$.
+\end{proof}
+
+
+\begin{rem}[чего не хватает]
+Единственное, что не доказано в \S\ref{prop:left-exact} и что, во
+обще говоря, ложно, --- это сюръективность
+$\Gamma(X,\Shv{G})\to\Gamma(X,\Shv{H})$. Именно этот пробел и
+измеряют когомологии.
+\end{rem}
+
+\subsection{Определение когомологий}
+Категория пучков абелевых групп на любом топологическом пространстве
+имеет достаточно много инъективных объектов. Для пучка $\Shv{F}$
+выберем инъективную резольвенту
+\[
+  0\longrightarrow\Shv{F}\longrightarrow I^0\longrightarrow I^1
+  \longrightarrow I^2\longrightarrow\cdots
+\]
+и положим
+\[
+  H^q(X,\Shv{F}):=H^q\bigl(\Gamma(X,I^\bullet)\bigr).
+\]
+Результат не зависит от выбора резольвенты с точностью до канонического
+изоморфизма. Ключевое свойство $H^0$: из определения
+\[
+  H^0(X,\Shv{F})\simeq\Gamma(X,\Shv{F})
+\]
+естественно по $\Shv{F}$. То есть когомологии продолжают функтор
+глобальных сечений вправо, заполняя разрыв точности.
+
+\begin{rem}[как читать связующий гомоморфизм]
+Из короткой точной $0\to\Shv{F}\to\Shv{G}\to\Shv{H}\to0$ получается
+длинная точная последовательность
+\[
+  0\to\Gamma(X,\Shv{F})\to\Gamma(X,\Shv{G})\to\Gamma(X,\Shv{H})
+  \xrightarrow{\delta}H^1(X,\Shv{F})\longrightarrow\cdots.
+\]
+Связующий гомоморфизм $\delta$ измеряет ровно то препятствие, о
+котором шла речь: сечение $h\in\Gamma(X,\Shv{H})$ поднимается до
+$\Gamma(X,\Shv{G})$ тогда и только тогда, когда $\delta(h)=0$. В
+примере с $S^1$ это препятствие ненулевое, и оно даёт
+$\delta(z)\ne0$.
+\end{rem}
+
+\subsection{Фласковые пучки}
+\begin{defn}[фласковый пучок]
+Пучок $\Shv{F}$ называется фласковым, если для любых открытых
+$V\subset U\subset X$ отображение ограничения
+$\Shv{F}(U)\to\Shv{F}(V)$ сюръективно.
+\end{defn}
+
+Термин ничего общего не имеет с «плоским» (это свойство тензорного
+произведения); по-английски это \emph{flabby} или \emph{flasque},
+по-французски \emph{flasque}.
+
+\begin{rem}[как читать определение]
+Фласковость --- это утверждение о \emph{продолжении} секции: взяли
+сечение над маленьким $V$ и хотим продолжить его до $U$. Это
+ровно то свойство, которого не хватало глобальным сечениям.
+Отсюда и смысл: фласковые пучки «не сопротивляются» выходу на
+большие множества, а значит, не дают препятствий при склейке.
+\end{rem}
+
+\begin{exm}
+Пучок всех отображений $U\to A$ в абелеву группу $A$ фласков:
+отображение с $V$ продолжается на $U$, например нулём вне $V$.
+Пучок непрерывных функций, напротив, обычно не фласков: функция
+$1/x$ на $(0,\infty)$ не продолжается непрерывно на $\R$.
+\end{exm}
+
+\begin{risunok}{Фласковость: сечение над $V\subset U$ обязательно
+  продолжается до сечения над $U$ (красная стрелка --- любое такое
+  продолжение; нулевое продолжение тоже годится). \label{fig:flabby}}
+\begin{tikzpicture}[>=Stealth,font=\small]
+  \draw[fig base] (0,0) ellipse (3.2 and 0.62);
+  \begin{scope}
+    \clip (0,0) ellipse (3.2 and 0.62);
+    \fill[primary!12] (-1.4,0) ellipse (1.15 and 0.55);
+  \end{scope}
+  \draw[fig open] (-1.4,0) ellipse (1.15 and 0.55);
+  \node[primary] at (-2.4,0.85) {$V$};
+  \node at (2.3,0.85) {$U$};
+  \fill (-1.4,0) circle (2.6pt);
+  \node[below right] at (-1.3,-0.12) {$x$};
+  \draw[->,danger,line width=1pt] (-1.9,1.5) .. controls (0,2.3) ..
+    (2.2,1.5);
+  \node[danger,above] at (0.2,1.75) {$\widetilde s\in\Shv{F}(U)$};
+  \node[font=\footnotesize] at (2.55,2.35)
+    {любое продолжение подходит,};
+  \node[font=\footnotesize] at (2.55,2.05) {важно лишь существование};
+\end{tikzpicture}
+\end{risunok}
+
+Пояснение к рисунку~\ref{fig:flabby}. Синий овал --- вложенное
+открытое множество $V\subset X$, большой чёрный --- $U$. Красная
+кривая, поднимающаяся из точки $V$ вверх, --- продолжение сечения
+$\Shv{F}(V)$ до сечения над $U$. Фласковость требует, чтобы такая
+кривая существовала; какая именно, не важно. Именно поэтому в
+доказательствах всегда используется нулевое или произвольное
+продолжение, а не какое-то каноническое.
+
+\mn{Ниже используются только алгебраические свойства инъективного
+     объекта: никакой топологии многообразий в доказательстве нет.}
+
+\begin{lem}\label{lem:inj-flabby}
+Инъективный пучок абелевых групп фласков.
+\end{lem}
+
+\begin{proof}
+Обозначим через $j_{W!}\underline{\Z}_W$ продолжение нулём
+постоянного пучка $\Z$ с $W$ на всё $X$. При $V\subset U$ имеется
+мономорфизм $j_{V!}\underline{\Z}_V\hookrightarrow
+j_{U!}\underline{\Z}_U$. Для любого пучка $\I$ естественно
+\[
+  \Hom_X(j_{W!}\underline{\Z}_W,\I)\simeq\I(W).
+\]
+Если $\I$ инъективен, всякий морфизм $j_{V!}\underline{\Z}_V\to\I$
+продлевается до $j_{U!}\underline{\Z}_U$. В указанном отождествлении
+продление означает, что образ любого элемента $\I(V)$ достигается:
+то есть ограничение $\I(U)\to\I(V)$ сюръективно.
+\end{proof}
+
+
+\begin{thm}\label{thm:flabby-acyclic}
+Если $\Shv{F}$ фласков, то $H^q(X,\Shv{F})=0$ при всех $q>0$.
+Следовательно, если $0\to\Shv{F}\to\Shv{G}\to\Shv{H}\to0$ --- короткая
+точная последовательность и $\Shv{F}$ фласков, то
+$0\to\Gamma(X,\Shv{F})\to\Gamma(X,\Shv{G})\to
+\Gamma(X,\Shv{H})\to0$ точна.
+\end{thm}
+
+\begin{proof}
+Проведём индукцию по $n$, одновременно доказывая два утверждения:
+фласковы $K^n$ и $\Gamma(X,I^\bullet)$ точна в положительных
+степенях. Пусть $\Shv{F}\to I^\bullet$ --- инъективная резольвента,
+и $K^0=\Shv{F}$, а $K^{n+1}$ --- коядры в точных коротких
+последовательностях
+\[
+  0\longrightarrow K^n\longrightarrow I^n\longrightarrow
+  K^{n+1}\longrightarrow0.
+\]
+Все $I^n$ фласковы по лемме~\ref{lem:inj-flabby}. Если $K^n$
+фласков, то $K^{n+1}$ фласков по лемме~\ref{lem:flabby-factor}. Это
+даёт фласковость всех $K^n$.
+
+Остаётся отметить: если ядро короткой точной последовательности
+$0\to A\to B\to C\to0$ фласково, то $B(V)\to C(V)$ сюръективно для
+любого открытого $V$. Действительно, сечение $c\in C(V)$ имеет
+локальные подъёмы; разности уже построенных подъёмов лежат в
+$A$ на соответствующих пересечениях, и фласковость $A$ позволяет
+продолжить их так, чтобы подъёмы стали совпадать, после чего
+склейка по (F2) для $B$ даёт глобальный подъём. Подробно это
+построение расписано в доказательстве леммы~\ref{lem:flabby-factor}.
+
+Применяя это к последовательностям выше, получаем сюръективность
+$\Gamma(X,I^n)\to\Gamma(X,K^{n+1})$, откуда точность
+$\Gamma(X,I^\bullet)$ в степенях $\ge0$. Значит, $H^q(X,\Shv{F})=0$
+при $q>0$. Наконец, длинная точная последовательность когомологий
+при $H^1(X,\Shv{F})=0$ даёт сюръективность
+$\Gamma(X,\Shv{G})\to\Gamma(X,\Shv{H})$.
+\end{proof}
+
+\begin{rem}[смысл \S\ref{thm:flabby-acyclic}]
+Это первая нетривиальная выгода от фласковости. Сравните с
+\S\ref{prop:left-exact}: там мы получили только левая точность.
+Теперь, добавив одно условие на первый пучок (фласковость),
+получаем и сюръективность. Образ $\operatorname{im}_{\Sh}f$ вообще не фласков;
+а вот коядр любого морфизма из фласкова --- фласков, что и
+используется в конструкции Годемана.
+\end{rem}
+
+\begin{rem}[логика выбора]
+Инъективные объекты фласковы, а инъективных объектов достаточно
+много; значит, резольвенту из фласковых пучков можно построить сразу
+и не вовлекая инъективность явно. Два подхода к вычислению когомологий
+--- через инъективные резольвенты и через фласковые --- эквивалентны,
+и ниже приведена вторая, более конструктивная.
+\end{rem}
+
+\begin{lem}[фласковый фактор]\label{lem:flabby-factor}
+Пусть $0\to\Shv{F}\to\Shv{G}\to\Shv{H}\to0$ --- короткая точная
+последовательность пучков, причём $\Shv{F}$ и $\Shv{G}$ фласковы.
+Тогда $\Shv{H}$ фласков.
+\end{lem}
+
+\mn{Трансфинитное склеивание --- единственное место, где
+     приходится думать об аккуратности: для конечных покрытий
+     достаточно индукции по числу элементов.}
+
+\begin{proof}
+Покажем сначала, что любое сечение $h\in\Shv{H}(V)$ поднимается до
+$g\in\Shv{G}(V)$. Точность пучков даёт покрытие $V=\bigcup_iV_i$ и
+локальные подъёмы $g_i\in\Shv{G}(V_i)$. Упорядочим множество
+индексов и склеим подъёмы трансфинитной индукцией. Пусть подъём уже
+построен на $W=\bigcup_{j<i}V_j$. На пересечении $W\cap V_i$ имеются
+два подъёма: $g_i$ и уже построенный на $W$; их разность лежит в
+$\Shv{F}(W\cap V_i)$, то есть в образе $g_i$. Фласковость $\Shv{F}$
+продолжает это различие с $W\cap V_i$ до $V_i$. Прибавив
+продолжение к $g_i$, получаем подъём, совпадающий с уже построенным
+на пересечении. По (F2) пучка $\Shv{G}$ их склейка даёт подъём на
+$W\cup V_i$. На предельном этапе (если индексное множество имеет
+предел) совместимые секции склеиваются той же аксиомой. Итак,
+$g\in\Shv{G}(V)$ и его образ равен $h$.
+
+Теперь пусть $V\subset U$. Продолжим $g$ до
+$\widetilde g\in\Shv{G}(U)$ --- это возможно по фласковости
+$\Shv{G}$. Образ $\widetilde g$ в $\Shv{H}(U)$ продолжает $h$, что и
+означает, что $\Shv{H}(U)\to\Shv{H}(V)$ сюръективно.
+\end{proof}
+
+
+\subsection{Резольвента Годемана}\label{sec:godement}
+Фласковые пучки строятся из любого пучка явно и канонически. Для
+открытого $U$ положим
+\[
+  C^0(\Shv{F})(U):=\prod_{x\in U}\Shv{F}_x.
+\]
+Элемент --- произвольное семейство $t=(t_x)_{x\in U}$,
+$t_x\in\Shv{F}_x$; никакой непрерывности и локальной
+представимости не требуется. Ограничение на $V\subset U$ просто
+забывает координаты вне $V$.
+
+\begin{rem}[почему это пучок и почему он фласков]
+Это \emph{ациклический} пучок в смысле Годемана, и оба свойства
+проверяются напрямую. Пучок: согласованные семейства на покрытии
+однозначно задают значения во всех точках покрытия, а точки вне
+покрытия забыты ограничением, --- единственность выполнена.
+Фласковость: семейство на $V$ продолжается на $U$ нулевыми
+элементами в точках $U\setminus V$, поэтому явный подъём всегда
+есть.
+\end{rem}
+
+Есть канонический морфизм
+\[
+  \eta_{\Shv{F}}:\Shv{F}\longrightarrow C^0(\Shv{F}),\qquad
+  s\longmapsto(s_x)_{x\in U}\quad(s\in\Shv{F}(U)).
+\]
+Он инъективен: если все ростки $s_x$ нулевые, то $s$ локально нулевой,
+а по (F1) $s=0$. Положим $Q^0=\Shv{F}$ и положим рекурсивно
+\[
+  C^n(\Shv{F})=C^0(Q^n),\qquad
+  Q^{n+1}=\operatorname{coker}\bigl(Q^n\longrightarrow C^n(\Shv{F})
+  \bigr),
+\]
+где $Q^n\to C^n(\Shv{F})$ --- канонический морфизм. Композиция
+$C^n\to Q^{n+1}\to C^{n+1}$ задаёт дифференциал. По определению
+коядра и инъективности $Q^n\to C^n(\Shv{F})$ получается точная
+последовательность
+\[
+  0\longrightarrow\Shv{F}\longrightarrow C^0(\Shv{F})
+  \longrightarrow C^1(\Shv{F})\longrightarrow C^2(\Shv{F})
+  \longrightarrow\cdots,
+\]
+все члены которой фласковы. Это и есть \emph{резольвента Годемана};
+применение $\Gamma(X,-)$ к ней даёт комплекс, когомологии которого
+совпадают с $H^\bullet(X,\Shv{F})$.
+
+\begin{risunok}{Резольвента Годемана: каждый член --- семейства ростков
+  в точках $U$ (строки --- уровни), и всякая секция предыдущего члена
+  продолжается, что и обеспечивает точность на сечениях.
+  \label{fig:godement}}
+\begin{tikzpicture}[>=Stealth,font=\small]
+  \draw[fig fiber] (-3.3,2.6) -- (2.6,2.6);
+  \draw[fig fiber] (-3.3,1.7) -- (2.6,1.7);
+  \draw[fig fiber] (-3.3,0.8) -- (2.6,0.8);
+  \node[anchor=east,font=\footnotesize] at (-3.45,2.6) {$C^0$};
+  \node[anchor=east,font=\footnotesize] at (-3.45,1.7) {$C^1$};
+  \node[anchor=east,font=\footnotesize] at (-3.45,0.8) {$C^2$};
+  \node[anchor=west,font=\footnotesize] at (2.75,2.6)
+    {$\prod_{x\in U}\Shv{F}_x$};
+  \node[anchor=west,font=\footnotesize] at (2.75,1.7) {$\Shv{F}$};
+  \node[anchor=west,font=\footnotesize] at (2.75,0.8) {$\Shv{F}$};
+  \foreach \xx/\yy in
+    {-2.6/2.6,-1.3/2.6,0/2.6,1.3/2.6,
+     -2.6/1.7,-1.3/1.7,0/1.7,1.3/1.7,
+     -2.6/0.8,-1.3/0.8,0/0.8,1.3/0.8}
+  {
+    \fill[color=text] (\xx,\yy) circle (2.2pt);
+  }
+  \draw[->,danger,line width=.9pt] (-1.3,2.75) -- (-1.3,1.55);
+  \draw[->,danger,line width=.9pt,dashed] (1.3,2.75) .. controls
+    (2.2,2.2) .. (1.3,1.55);
+  \node[font=\footnotesize] at (2.6,3.1)
+    {сплошная: продолжение нулём;};
+  \node[font=\footnotesize] at (2.6,2.8)
+    {пунктирная: произвольная коррекция};
+\end{tikzpicture}
+\end{risunok}
+
+%==================================================================
+\section{Итоги}
+%==================================================================
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{.30\textwidth}p{.62\textwidth}@{}}
+\toprule
+\textbf{Конструкция} & \textbf{Что она фиксирует} \\
+\midrule
+Предпучок $\Shv{F}$ & Данные на каждом открытом множестве и
+  ограничения; ничего не требуется от склейки \\
+Пучок & Локальная определимость (F1) и склейка (F2): именно эти
+  два условия решают задачу из \S\,1 \\
+Слой $\Shv{F}_x$ & Локальное поведение у точки $x$; <<минимальное»
+  открытое множество данных \\
+$\et(\Shv{F})$, $\pi$ & Пространство ростков и проекция;
+  $\pi$ --- локальный гомеоморфизм \\
+$\Shv{F}^{\#}$ & Пучок непрерывных сечений $\pi$; универсальное
+  исправление предпучка, не меняющее ростков \\
+$\Hom(\Shv{F},\Shv{G})\simeq\Hom(\Shv{F}^{\#},\Shv{G})$ &
+  Проверяемо, только если $\Shv{G}$ --- пучок; отсюда
+  функтор $\Shv{F}\mapsto\Shv{F}^{\#}$ \\
+$\Gamma(X,-)$ & Глобальные сечения; точен слева, но не справа \\
+$H^q(X,\Shv{F})$ & Производные $\Gamma(X,-)$; измеряют остаток
+  неразрешимости \\
+Фласковый пучок & Секция с меньшего открытого всегда продолжается
+  на большее; пример ациклического объекта \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Цепочка рассуждений}
+\[
+\begin{aligned}
+\text{локальные данные}
+&\longrightarrow\text{предпучок (проверяем, что склейка нужна)},\\
+&\longrightarrow\text{пучок: (F1) и (F2) дают склейку},\\
+&\longrightarrow\text{ростки: проверяем всё в одной точке},\\
+&\longrightarrow\text{точность на ростках: локально достаточно},\\
+&\longrightarrow\Gamma(X,-)\text{ точен слева, но не справа},\\
+&\longrightarrow H^q(X,\Shv{F})\text{ измеряет остаток}.
+\end{aligned}
+\]
+
+\subsection{Что стоит запомнить}
+\begin{bullets}
+\item Слово <<секция>> означает элемент $\Shv{F}(U)$, а не функцию на
+  $U$. Между этими двумя смыслами и живут все контрпримеры.
+\item $B^k$ --- предпучок, $Z^k$ --- пучок. Разница ровно в
+  глобальной точности.
+\item Точность последовательности \emph{пучков} равносильна точности
+  на \emph{ростках}; точность \emph{последовательности сечений} из
+  этого не следует.
+\item Образ морфизма пучков берётся с прокачиванием; ядро ---
+  нет.
+\item Фласковость --- это продолжение секций, а не «плоскость» из
+  теории модулей.
+\item $\pi\colon\et(\Shv{F})\to X$ --- локальный гомеоморфизм, но
+  не обязательно накрытие.
+\end{bullets}
+
+%==================================================================
+\begin{thebibliography}{9}
+\bibitem{lec}
+ С.~М.~Львовский. Рукописные конспекты лекций по теории пучков,
+ лекции 1--3. Сканы: \textenglish{\texttt{lecture-01/}}
+ (стр.~1--8), \textenglish{\texttt{lecture-02/}}
+ (стр.~9--15), \textenglish{\texttt{lecture-03/}} (стр.~16--20).
+ М.~Ц.~Н.~Н.~И.~М., 2018--2026.
+\bibitem{god}
+ Годеман Р. \emph{Алгебраическая топология и теория пучков}. --- М.:
+ Издательство иностранной литературы, 1961. --- Гл.~I, \S\,1.7--1.9;
+ гл.~II, \S\,1 (п.~1.1--1.4), \S\,2, \S\,2.4--2.5, п.~3.9.
+\bibitem{manin}
+ Манин Ю.~И. \emph{Введение в теорию схем и квантовые группы} / под
+ ред. Д.~А.~Лейтеса и С.~М.~Львовского. --- М.: МЦНМО, 2012. ---
+ \S\,1.10, \S\,1.12; \S\,1.16.5--1.16.9; \S\,2.1.1--2.1.9.
+\bibitem{maclane}
+ Mac~Lane S., Moerdijk I. \emph{Sheaves in Geometry and Logic: A First
+ Introduction to Topos Theory}. Springer, 1992.
+ DOI: \textenglish{\url{https://doi.org/10.1007/978-1-4612-0927-0}}.
+\bibitem{tennison}
+ Tennison B.~R. \emph{Sheaf Theory}. London Mathematical Society Lecture
+ Note Series~20. Cambridge University Press, 1975.
+\bibitem{iversen}
+ Iversen B. \emph{Cohomology of Sheaves}. Universitext, Springer, 1986.
+ Гл.~1--2. Электронная версия:
+ \textenglish{\url{https://webhomes.maths.ed.ac.uk/~v1ranick/papers/iversensheaves.pdf}}.
+\end{thebibliography}
+
+\end{document}
