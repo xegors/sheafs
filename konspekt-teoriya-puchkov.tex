@@ -105,6 +105,12 @@
 \newenvironment{ass}{\thmbeg\begin{assinner}}{\end{assinner}\thmend}
 \newenvironment{rem}{\thmbeg\begin{reminner}}{\end{reminner}\thmend}
 
+% Длинные утверждения: прямым шрифтом (курсив на several строк нечитаем),
+% сквозная нумерация с \thm.
+\theoremstyle{definition}
+\newtheorem{utvinner}[thminner]{Утверждение}
+\newenvironment{utv}{\thmbeg\begin{utvinner}}{\end{utvinner}\thmend}
+
 % Боксовая обвязка \thmbeg/\thmend ломает вычисление ширины в пакете
 % marginnote (рамки в ней всё равно нет — она лишь держит заголовок
 % рядом с текстом). Поэтому теоремы набираются обычным абзацем.
@@ -121,10 +127,14 @@
 \newcommand{\sectionsrc}[1]{\par\smallskip\noindent
   {\color{gray}\footnotesize По сканам: #1}\par\medskip}
 
-% Полосные пояснения: «сложные места» и напоминания
-\newcommand{\mn}[1]{\marginnote{\raggedright\footnotesize
-  \color{gray}\textcolor{primary}{$\bullet$}\,#1}}
-\setlength{\marginparpush}{1.6\baselineskip}
+% Полосные пояснения: «сложные места» и напоминания.
+% Врезки короткие — иначе они наезжают друг на друга и на текст.
+% \color{gray}\vphantom{A} даёт каждой врезке собственный минимальный
+% отступ сверху: соседние заметки гарантированно не накладываются.
+\newcommand{\mn}[1]{\marginnote{\raggedright\scriptsize
+  \color{gray}\vphantom{Xg}%
+  \textcolor{primary}{$\bullet$}\,#1}}
+\setlength{\marginparpush}{3.2\baselineskip}
 
 %------------------------------------------------------------------
 % Нумерация рисунков и диаграмм (не «плавающие»: стоят на своём месте)
@@ -304,11 +314,8 @@
   препятствия --- когомологии, а удобные «нулевые» объекты ---
   фласковые пучки.
 \end{conditions}
-\mn{Если потерялись: каждый последующий пункт отвечает на
-     \emph{неразрешимую} проблему предыдущего. Пучок нужен, чтобы
-     склеивать; ростки нужны, чтобы сводить геометрию к точности;
-     когомологии нужны, потому что точность на ростках не даёт
-     глобальной точности.}
+\mn{Каждый следующий пункт отвечает на неразрешимую проблему
+     предыдущего.}
 
 \subsection{Обозначения}
 Для предпучков и пучков используется начертание $\Shv{F},\Shv{G},
@@ -318,7 +325,8 @@
 \begin{center}
 \small
 \renewcommand{\arraystretch}{1.25}
-\begin{tabular}{@{}p{0.30\textwidth}p{0.63\textwidth}@{}}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.34\textwidth}%
+                >{\raggedright\arraybackslash}p{0.59\textwidth}@{}}
 \toprule
 Обозначение & Что означает \\
 \midrule
@@ -391,10 +399,8 @@ $f(z)=z$ его отсутствие видно из
 теореме Коши.
 \end{exm}
 
-\mn{Ключевое различие: на $\C^\times$ функция $z$ \emph{не имеет}
-     нулей, поэтому локальный логарифм есть везде. Значит, препятствие
-     не в существовании, а в склейке. В терминах теории пучков
-     препятствие измеряется числом $H^1(X,\underline{\Z})$.}
+\mn{Препятствие не в существовании, а в склейке; его мера ---
+     $H^1(X,\underline{\Z})$.}
 
 \begin{risunok}{Локальные логарифмы есть в каждой окрестности, но они не
   согласуются: значения на двух соседних окрестностях различаются на
@@ -485,23 +491,23 @@ $U\to V$ существует тогда и только тогда, когда 
   открытого множества на \emph{меньшее}.}
   \label{fig:contrav}
 \begin{tikzpicture}[>=Stealth,font=\small]
-  % категория Open(X)
-  \node at (0,1.5) {$\Top_X$};
-  \node[draw,rounded corners,inner sep=3pt] (W) at (0,0.9) {$W$};
-  \node[draw,rounded corners,inner sep=3pt] (U) at (0,0.1) {$U$};
-  \node[draw,rounded corners,inner sep=3pt] (Vi) at (0,-0.7) {$V$};
-  \draw[->] (W) -- node[right,font=\footnotesize]{$\subset$} (U);
-  \draw[->] (U) -- node[right,font=\footnotesize]{$\subset$} (Vi);
-  % значения
-  \node at (3.6,1.5) {$\Top_X^{\mathrm{op}}\to\mathrm{AbGr}$};
-  \node[draw,rounded corners,inner sep=3pt] (FW) at (3.6,0.9)
+  % категория открытых множеств
+  \node at (0,2.6) {$\Top_X$};
+  \node[draw,rounded corners,inner sep=3.5pt] (W) at (0,1.75) {$W$};
+  \node[draw,rounded corners,inner sep=3.5pt] (U) at (0,0.25) {$U$};
+  \node[draw,rounded corners,inner sep=3.5pt] (Vi) at (0,-1.25) {$V$};
+  \draw[->] (W) -- node[right=3pt,font=\footnotesize]{$\subset$} (U);
+  \draw[->] (U) -- node[right=3pt,font=\footnotesize]{$\subset$} (Vi);
+  % значения предпучка
+  \node at (5.4,2.6) {$\Top_X^{\mathrm{op}}\to\mathrm{AbGr}$};
+  \node[draw,rounded corners,inner sep=3.5pt] (FW) at (5.4,1.75)
     {$\Shv{F}(W)$};
-  \node[draw,rounded corners,inner sep=3pt] (FU) at (3.6,0.1)
+  \node[draw,rounded corners,inner sep=3.5pt] (FU) at (5.4,0.25)
     {$\Shv{F}(U)$};
-  \node[draw,rounded corners,inner sep=3pt] (FVi) at (3.6,-0.7)
+  \node[draw,rounded corners,inner sep=3.5pt] (FVi) at (5.4,-1.25)
     {$\Shv{F}(V)$};
-  \draw[->] (FW) -- node[right,font=\footnotesize]{$\res^{W}_{U}$} (FU);
-  \draw[->] (FU) -- node[right,font=\footnotesize]{$\res^{U}_{V}$} (FVi);
+  \draw[->] (FW) -- node[right=3pt,font=\footnotesize]{$\res^{W}_{U}$} (FU);
+  \draw[->] (FU) -- node[right=3pt,font=\footnotesize]{$\res^{U}_{V}$} (FVi);
   % пунктир: соответствие
   \draw[fig fiber,<->] (W) to[bend left=28] node[above,font=\footnotesize]
     {$\Shv{F}$} (FW);
@@ -538,21 +544,24 @@ $s|_{U_n}=f|_{U_n}$, но обязательно $s=f$, а $f$ не ограни
   сечения согласованы и покрывают $\R$, но их склейка не ограничена.
   \label{fig:bounded}}
 \begin{tikzpicture}[>=Stealth,font=\small]
-  \draw[->] (-0.3,0) -- (6.6,0);
-  \draw[->] (0,-0.3) -- (0,3.3);
+  \draw[->] (-3.4,0) -- (7.4,0);
+  \draw[->] (0,-3.5) -- (0,3.6);
+  \node[below right,font=\footnotesize] at (7.0,-0.3) {$x$};
+  % вложенные окрестности U_1 \subset U_2 \subset U_3 вокруг 0
+  \draw[fig open] (0,0) ellipse (1.0 and 1.0);
+  \draw[fig open] (0,0) ellipse (1.9 and 1.9);
+  \draw[fig open] (0,0) ellipse (2.8 and 2.8);
+  \node[primary] at (0,1.25) {$U_1$};
+  \node[primary] at (0,2.15) {$U_2$};
+  \node[primary] at (0,3.05) {$U_3$};
+  % функция f(x)=x
   \draw[fig sect,smooth] plot coordinates
-    {(0.1,0.55) (1.6,0.8) (3.2,1.35) (4.9,2.1) (6.2,2.85)};
-  \node[danger] at (6.35,2.9) {$f(x)=x$};
-  \foreach \idx/\rad in {1/1.35,2/2.55,3/3.75} {
-    \draw[fig open] (0,\rad)
-      ellipse [x radius=\idx, y radius=\rad];
-    \node[left] at (-0.08,\rad) {$U_{\idx}$};
-    \foreach \x in {0.6,1.8,3.0} {
-      \draw[fig fiber] (\x,\rad) -- (\x,0);
-    }
+    {(0.35,0.5) (1.7,0.95) (3.1,1.55) (4.7,2.2) (6.3,2.9)};
+  \node[danger,above right] at (6.2,2.85) {$f(x)=x$};
+  % пунктиры: ограничения на куски
+  \foreach \xx in {0.35,1.7,3.1} {
+    \draw[fig fiber] (\xx,0) -- (\xx,0.9);
   }
-  \node[font=\footnotesize] at (3.4,3.15)
-    {каждая $f|_{U_n}$ ограничена; склейка $f$ --- нет};
 \end{tikzpicture}
 \end{risunok}
 
@@ -575,12 +584,8 @@ $\Shv{P}(U)$, но при $a\ne b$ это невозможно, поскольк
 одноэлементно по определению.
 \end{exm}
 
-\mn{Частая ошибка: считать, что постоянный пучок $\underline A$ и
-     постоянный предпучок --- одно и то же. Постоянный \emph{пучок}
-     $U\mapsto$ <<локально постоянные функции $U\to A$>> не
-     одноэлементен: на несвязном $U$ он содержит разные значения на
-     разных компонентах. Пример перехода от предпучка к пучку
-     разобран в \S\,\ref{sec:const}.}
+\mn{Постоянный \emph{пучок} --- локально постоянные функции
+     $U\to A$: на несвязном $U$ он не одноэлементен.}
 
 \begin{exm}[замкнутые и точные формы]\label{exm:zk-bk}
 Назначение $U\mapsto Z^k(U)=\ker\bigl(d:\Omega^k(U)\to
@@ -598,16 +603,13 @@ $\operatorname{im}_{\mathrm{pre}}(d)$ есть предпучок. Но он н�
 $Z^k$; вот обратное включение неверно. На $S^1$ форма угла $d\theta$
 точно локально (на каждой дуге), но не является дифференциалом
 глобальной функции: её интеграл по окружности равен $2\pi\ne0$.
+\mn{Первый случай: образ предпучка не пучок. См.\ \S\,\ref{sec:image}.}
 Следовательно, существуют формы, точные локально, но не точные
 глобально.
-\mn{Это первое появление образа предпучка, который не является
-     пучком. Разбор в \S\,\ref{sec:image} --- почему образ в
-     категории пучков приходится «прокачивать».}
 
 \subsection{Морфизмы предпучков}
-\mn{Все дальнейшие утверждения о точности --- это утверждения о
-     морфизмах предпучков. Поэтому в этом месте стоит потратить
-     минуту на определение.}
+\mn{Все утверждения о точности ниже — это утверждения о морфизмах
+     предпучков.}
 Гомоморфизм предпучков --- это семейство гомоморфизмов
 $f_U:\Shv{F}(U)\to\Shv{G}(U)$ по одному на каждое открытое множество,
 согласованных с ограничениями. Это в точности естественное
@@ -652,8 +654,7 @@ $W$ ростки тоже совпадут, поскольку $s,t$ совпа�
 \input{parts/stalks.tex}
 
 \subsection{Пучок определяется ростками}
-\mn{Это утверждение --- рабочая лошадка всего дальнейшего. Им можно
-     пользоваться для проверки равенств, не трогая секции.}
+\mn{Рабочая лошадка: равенство пучков проверяется по слоям.}
 Из лекции~1 полезно запомнить следующее правило, ради которого в
 теории вообще появляются ростки.
 
@@ -705,11 +706,9 @@ $f=g$. И наоборот. Действительно, $f_x=g_x$ означае
 \]
 \end{quote}
 
-\mn{Читать условие надо внимательно: справа стоят гомоморфизмы
-     \emph{пучков}, то есть $\Shv{F}^{\#}$ — пучок. Слева —
-     гомоморфизмы \emph{предпучков}, то есть $\Shv{G}$ может быть
-     произвольным предпучком. Это не симметрия: условие проверяется
-     для всех пучков $\Shv{G}$ и \emph{ни одного} предпучка.}
+\mn{Справа --- гомоморфизмы \emph{пучков} (левая часть условия),
+     слева --- \emph{предпучков}. Проверяем для всех $\Shv{G}$
+     пучков и ни одного предпучка.}
 
 Такое свойство называется \emph{универсальным}, и оно появляется в
 любой теории, где есть «свёртка». Оно означает: $\Shv{F}^{\#}$ --- это
@@ -826,19 +825,17 @@ $\ker d=Z^k$ устроен прекрасно, а $\operatorname{im}d$ --- не
 групп. Тогда поточечное ядро $\ker f$ является пучком.
 \end{thm}
 
-\mn{Полезно держать в голове различие: ядро --- операция,
-     сохраняющая точность поэлементно, образ --- нет.}
+\mn{Ядро сохраняет точность поэлементно, образ --- нет.}
 
 \begin{proof}
 Условие (F0) для ядра выполняется: $0\in\ker f_U$ при любом $U$.
 Для (F1) достаточно применить (F1) пучка $\Shv{F}$.
-\mn{В доказательстве (F2) используются обе аксиомы пучка $\Shv{F}$:
-      склейка локальных сечений и затем (F1) для $\Shv{G}$;
-      в (F1) нужна только аксиома первого пучка.}
 
 Разберём (F2). Пусть $s_i\in\ker(f_{U_i})$ согласованы на покрытии
 $U=\bigcup_iU_i$. Сначала склеим их по (F2) пучка $\Shv{F}$ в
 $s\in\Shv{F}(U)$ с $s|_{U_i}=s_i$. На каждом $U_i$ имеем
+\mn{(F2) склеивает локальные сечения, затем (F1) пучка $\Shv{G}$
+     даёт $f_U(s)=0$.}
 \[
   f_{U_i}(s|_{U_i})=f_{U_i}(s_i)=0,
 \]
@@ -917,21 +914,26 @@ C^\infty(S^1)$ с $du|_{U_i}=du_i$, откуда $du=0$, то есть $u$
 запишем всё точно.
 
 \begin{rem}[три разных утверждения, которые путают]\label{rem:three}
+Первые два эквивалентны, третье --- нет.
+\end{rem}
 \begin{conditions}
-\item Точность на \emph{ростках}:
-$0\to\Shv{F}_x\to\Shv{G}_x\to\Shv{H}_x\to0$ точна для каждого $x$.
+\item Точность на \emph{ростках}: для каждого $x\in X$ точна
+ \[
+   0\to\Shv{F}_x\to\Shv{G}_x\to\Shv{H}_x\to0.
+ \]
 \item Точность \emph{пучков}: $\ker g=\operatorname{im}_{\Sh}f$ как
   равенство пучков. Это \emph{эквивалентно} предыдущему.
 \item Точность \emph{последовательности глобальных сечений}:
-$0\to\Shv{F}(X)\to\Shv{G}(X)\to\Shv{H}(X)\to0$ точна. Это уже
-  \emph{не эквивалентно} ни первому, ни второму: из точной
-  последовательности пучков следует лишь левая точность сечений.
+ \[
+   0\to\Shv{F}(X)\to\Shv{G}(X)\to\Shv{H}(X)\to0
+ \]
+  точна. Это уже \emph{не эквивалентно} ни первому, ни второму: из
+  точной последовательности пучков следует лишь левая точность
+  сечений.
 \end{conditions}
-\end{rem}
 
-\mn{Запомнить формулу: точность пучков равносильна точности на
-     ростках. Точность же глобальных сечений из точной
-     последовательности пучков вообще не следует.}
+\mn{Точность пучков $\Leftrightarrow$ точность на ростках.
+     Точность глобальных сечений отсюда не следует.}
 
 \begin{exm}[эпиморфизм пучков, не сюръективный на сечениях]
 На $X=\C^\times$ есть точная короткая последовательность пучков
@@ -956,16 +958,14 @@ $\Shv{F}\to\Shv{G}$ индуцирует $\Gamma(X,\Shv{F})\to
 \Gamma(X,\Shv{G})$, поэтому $\Gamma(X,-)$ --- функтор из категории
 пучков в абелевы группы.
 
-\begin{thm}\label{prop:left-exact}
+\begin{utv}\label{prop:left-exact}
 $\Gamma(X,-)$ точен слева: если $0\to\Shv{F}\to\Shv{G}\to\Shv{H}\to0$
 точна, то $0\to\Gamma(X,\Shv{F})\to\Gamma(X,\Shv{G})\to
 \Gamma(X,\Shv{H})$ точна.
-\end{thm}
+\end{utv}
 
-\mn{Обратите внимание: в этом доказательстве аксиома (F1) даёт
-     переход от нулевых ростков к нулевому сечению, а аксиома (F2)
-     --- от локальных подъёмов к глобальному. Ровно эти два шага
-     и делают $\Gamma(X,-$ точной слева.}
+\mn{(F1): нулевые ростки $\Rightarrow$ нулевое сечение.
+     (F2): локальные подъёмы $\Rightarrow$ глобальный.}
 
 \begin{proof}
 Инъективность на сечениях. Если $i_X(s)=0$, то $i_x(s_x)=0$ для
@@ -1064,12 +1064,11 @@ $1/x$ на $(0,\infty)$ не продолжается непрерывно на 
   \node at (2.3,0.85) {$U$};
   \fill (-1.4,0) circle (2.6pt);
   \node[below right] at (-1.3,-0.12) {$x$};
-  \draw[->,danger,line width=1pt] (-1.9,1.5) .. controls (0,2.3) ..
-    (2.2,1.5);
-  \node[danger,above] at (0.2,1.75) {$\widetilde s\in\Shv{F}(U)$};
-  \node[font=\footnotesize] at (2.55,2.35)
+  \draw[->,danger,line width=1pt] (-2.6,2.6) -- (2.6,2.6);
+  \node[danger,above] at (0,2.6) {$\widetilde s\in\Shv{F}(U)$};
+  \node[font=\footnotesize,align=left] at (0,1.75)
     {любое продолжение подходит,};
-  \node[font=\footnotesize] at (2.55,2.05) {важно лишь существование};
+  \node[font=\footnotesize] at (0,1.4) {важно лишь существование};
 \end{tikzpicture}
 \end{risunok}
 
@@ -1081,8 +1080,7 @@ $\Shv{F}(V)$ до сечения над $U$. Фласковость требуе
 доказательствах всегда используется нулевое или произвольное
 продолжение, а не какое-то каноническое.
 
-\mn{Ниже используются только алгебраические свойства инъективного
-     объекта: никакой топологии многообразий в доказательстве нет.}
+\mn{Здесь нужна лишь алгебраическая инъективность.}
 
 \begin{lem}\label{lem:inj-flabby}
 Инъективный пучок абелевых групп фласков.
@@ -1103,13 +1101,13 @@ j_{U!}\underline{\Z}_U$. Для любого пучка $\I$ естествен�
 \end{proof}
 
 
-\begin{thm}\label{thm:flabby-acyclic}
+\begin{utv}\label{thm:flabby-acyclic}
 Если $\Shv{F}$ фласков, то $H^q(X,\Shv{F})=0$ при всех $q>0$.
 Следовательно, если $0\to\Shv{F}\to\Shv{G}\to\Shv{H}\to0$ --- короткая
 точная последовательность и $\Shv{F}$ фласков, то
 $0\to\Gamma(X,\Shv{F})\to\Gamma(X,\Shv{G})\to
 \Gamma(X,\Shv{H})\to0$ точна.
-\end{thm}
+\end{utv}
 
 \begin{proof}
 Проведём индукцию по $n$, одновременно доказывая два утверждения:
@@ -1165,9 +1163,8 @@ $\Gamma(X,\Shv{G})\to\Gamma(X,\Shv{H})$.
 Тогда $\Shv{H}$ фласков.
 \end{lem}
 
-\mn{Трансфинитное склеивание --- единственное место, где
-     приходится думать об аккуратности: для конечных покрытий
-     достаточно индукции по числу элементов.}
+\mn{Для конечных покрытий достаточно индукции по числу
+     элементов.}
 
 \begin{proof}
 Покажем сначала, что любое сечение $h\in\Shv{H}(V)$ поднимается до
@@ -1251,21 +1248,20 @@ $C^n\to Q^{n+1}\to C^{n+1}$ задаёт дифференциал. По опре
   \node[anchor=west,font=\footnotesize] at (2.75,2.6)
     {$\prod_{x\in U}\Shv{F}_x$};
   \node[anchor=west,font=\footnotesize] at (2.75,1.7) {$\Shv{F}$};
-  \node[anchor=west,font=\footnotesize] at (2.75,0.8) {$\Shv{F}$};
-  \foreach \xx/\yy in
+  \node[anchor=west,font=\footnotesize] at (2.75,0.8) {$\Shv{F}$};  \foreach \xx/\yy in
     {-2.6/2.6,-1.3/2.6,0/2.6,1.3/2.6,
      -2.6/1.7,-1.3/1.7,0/1.7,1.3/1.7,
      -2.6/0.8,-1.3/0.8,0/0.8,1.3/0.8}
   {
     \fill[color=text] (\xx,\yy) circle (2.2pt);
   }
-  \draw[->,danger,line width=.9pt] (-1.3,2.75) -- (-1.3,1.55);
-  \draw[->,danger,line width=.9pt,dashed] (1.3,2.75) .. controls
-    (2.2,2.2) .. (1.3,1.55);
-  \node[font=\footnotesize] at (2.6,3.1)
-    {сплошная: продолжение нулём;};
-  \node[font=\footnotesize] at (2.6,2.8)
-    {пунктирная: произвольная коррекция};
+  \draw[->,danger,line width=.9pt] (-1.3,2.6) -- (-1.3,1.7);
+  \draw[->,danger,line width=.9pt,dashed] (1.3,2.6) .. controls
+    (2.4,2.35) .. (1.3,1.7);
+  \node[font=\footnotesize] at (0,3.35)
+    {сплошная стрелка --- продолжение нулём,};
+  \node[font=\footnotesize] at (0,3.05)
+    {пунктирная --- произвольная коррекция};
 \end{tikzpicture}
 \end{risunok}
 
@@ -1275,7 +1271,8 @@ $C^n\to Q^{n+1}\to C^{n+1}$ задаёт дифференциал. По опре
 
 \begin{center}
 \renewcommand{\arraystretch}{1.25}
-\begin{tabular}{@{}p{.30\textwidth}p{.62\textwidth}@{}}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.32\textwidth}%
+                >{\raggedright\arraybackslash}p{0.60\textwidth}@{}}
 \toprule
 \textbf{Конструкция} & \textbf{Что она фиксирует} \\
 \midrule
